@@ -1,0 +1,5 @@
+[
+  {"ID":"friend_01","Name":"TALHA","Path":"TALHA","IsDir":true,"Size":-1,"MimeType":"inode/directory","ModTime":"2026-11-14T12:00:00Z"},
+  {"ID":"friend_02","Name":"ANOTHER FRIEND","Path":"ANOTHER FRIEND","IsDir":true,"Size":-1,"MimeType":"inode/directory","ModTime":"2026-11-14T12:00:00Z"},
+  {"ID":"game_01","Name":"Tiny Toon Adventures.nes","Path":"Tiny Toon Adventures.nes","IsDir":false,"Size":262144,"MimeType":"application/octet-stream","Hashes":{"MD5":"0123456789abcdef0123456789abcdef"},"ModTime":"2026-11-14T12:00:00Z"}
+]

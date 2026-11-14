@@ -1,0 +1,7 @@
+{
+  "label": "Friends Library",
+  "icon": "icon.png",
+  "iconsel": "icon.png",
+  "launch": "launch.sh",
+  "description": "Browse your private friends library and download games"
+}

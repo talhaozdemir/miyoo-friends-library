@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "target": "OnionOS 4.3.0",
+  "systems": [
+    {"id":"FC","label":"NES","aliases":"NES|FAMICOM|NINTENDO ENTERTAINMENT SYSTEM","extensions":"nes|fds|unf|unif|zip|7z"},
+    {"id":"SFC","label":"SNES","aliases":"SNES|SUPER FAMICOM|SUPER NINTENDO","extensions":"sfc|smc|fig|zip|7z"},
+    {"id":"GB","label":"Game Boy","aliases":"GAME BOY|GAMEBOY","extensions":"gb|zip|7z"},
+    {"id":"GBC","label":"Game Boy Color","aliases":"GAME BOY COLOR|GAMEBOY COLOR","extensions":"gbc|gb|zip|7z"},
+    {"id":"GBA","label":"Game Boy Advance","aliases":"GAME BOY ADVANCE|GAMEBOY ADVANCE","extensions":"gba|zip|7z"},
+    {"id":"MD","label":"Mega Drive","aliases":"GENESIS|MEGADRIVE|MEGA DRIVE|SEGA GENESIS","extensions":"md|gen|smd|bin|zip|7z"},
+    {"id":"PS","label":"PlayStation","aliases":"PS1|PSX|PLAYSTATION","extensions":"chd|pbp"},
+    {"id":"NDS","label":"Nintendo DS","aliases":"DS|NINTENDO DS","extensions":"nds"}
+  ]
+}

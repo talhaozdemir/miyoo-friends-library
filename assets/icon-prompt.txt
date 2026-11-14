@@ -1,0 +1,6 @@
+Built-in image_gen; transparent_background=true. Generated 14 November 2026.
+
+Create one polished app icon for 'Miyoo Friends Library', a private shared game download library on a retro handheld. Transparent background. No text, letters, logo, badge, watermark, or mockup. A single cohesive centered friendly retro handheld game console in warm ivory with dark navy screen, simple dark D-pad and two coral/magenta round buttons, overlapping a small mint-teal cloud behind the upper right corner. Refined playful 2.5D illustrated app icon with crisp simplified geometry, soft restrained shading, bold silhouette, readable at 64x64 pixels. Frontal view with only slight dimensional thickness, no busy details, no wires, no scene. Large subject filling 85% of square canvas, clean transparent outer margins. Design for an OnionOS Apps menu against variable dark or light themes. The output is only the isolated icon.
+
+Original: assets/friends-library-icon.png
+Runtime asset: package/App/FriendsLibrary/icon.png (64x64 RGBA, centered content at most52x52, alpha preserved). Prepared by scripts/prepare-icon.py from the unchanged source.

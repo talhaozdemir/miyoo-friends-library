@@ -1,0 +1,6 @@
+{
+  "root_folder_id": "REPLACE_WITH_SHARED_FOLDER_ID",
+  "remote": "friends",
+  "cache_ttl_seconds": 900,
+  "timeout_seconds": 30
+}
