@@ -47,7 +47,7 @@ heading(1, "Miyoo Friends Library", "Arkadaşların paylaştığı özel Google 
 note("İlk kurulum bilgisayarda, kullanım Miyoo'da", "Bu ZIP ve rehber yeterli. Kendi Google hesabınla bir kez bağlanırsın. Uygulama ve ortak klasör tanımı hazırdır; OAuth istemcisi oluşturman gerekmez.")
 p("Başlamadan önce", "sub")
 p("Miyoo Mini Plus + OnionOS 4.3, microSD kart okuyucu, internet ve Windows 10/11 (64 bit) veya macOS 12 ve üzeri gerekir. Mac'te Intel ve Apple Silicon desteklenir.")
-p("Google hesabın hem uygulamanın <b>test kullanıcıları</b> arasında olmalı hem de <b>ortak Drive klasörüne davetli</b> olmalı. Bunlar iki ayrı izindir. Eksikse paketi gönderen kişiye haber ver.")
+p("Google hesabın <b>ortak Drive klasörüne davetli</b> olmalı. Uygulama artık Production durumunda; test kullanıcıları listesine eklenmen gerekmez. Klasör iznin eksikse paketi gönderen kişiye haber ver.")
 step(1, "ZIP'i bilgisayara çıkar", "Miyoo-Friends-Library-Arkadas-Kurulum.zip dosyasını tamamen aç. İçinden App ve FirstSetup klasörleri çıkacak. Kurulumu ZIP'in içinden çalıştırma.")
 step(2, "App klasörünü SD kartın köküne kopyala", "Kartı tak. ZIP'teki <b>App</b> klasörünü, karttaki mevcut App klasörüyle birleştir. Sonuç aşağıdaki gibi olmalı. Kartı biçimlendirme; mevcut App klasörünü silme. FirstSetup bilgisayarda kalabilir.")
 p("SD kart/ &nbsp; (örnek: E: veya /Volumes/MIYOO)<br/>&nbsp;&nbsp;App/<br/>&nbsp;&nbsp;&nbsp;&nbsp;FriendsLibrary/<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.json<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;launch.sh", "code")
@@ -76,14 +76,14 @@ note("Mevcut hesabı koruma", "Reconnect sorusunda Enter mevcut hesabı korur. T
 p("Doğrulama durumu: Mac yardımcısının bash sözdizimi kontrol edildi; gerçek bir Mac üzerinde Google giriş akışı henüz denenmedi. Sorun olursa hata mesajını paketi gönderen kişiye ilet; hesap dosyanı gönderme.", "small")
 
 heading(4, "Google girişini tamamla", "Windows ve Mac için ortak adımlar. Her arkadaş kendi hesabıyla bağlanır; paketi gönderen kişinin hesabı kullanılmaz.")
-step(1, "Doğru hesabı seç", "Ortak Drive klasörüne davet edildiğin ve test kullanıcısı olarak eklenen Google hesabını seç. Tarayıcı başka hesapta açıksa hesap seçimini değiştir.")
+step(1, "Doğru hesabı seç", "Ortak Drive klasörüne davet edildiğin Google hesabını seç. Tarayıcı başka hesapta açıksa hesap seçimini değiştir. Production durumunda ayrıca test kullanıcısı kaydı gerekmez.")
 step(2, "Uygulama adını kontrol et", "Beklenen uygulama <b>MiyooFriendsLibrary</b>. Google'ın gösterdiği izinleri oku ve erişimi onayla. Bu kurulum Drive dosyalarını listelemek ve indirmek için <b>salt okunur</b> yetki ister.")
-p("Test uygulaması için doğrulanmamış uygulama uyarısı görülebilir. Yalnız tanıdığın kişinin bu paketini kurduğundan ve doğru uygulamada olduğundan eminsen devam et. Başka bir uygulama veya yazma/silme izni görürsen işlemi durdur.")
+p("Google doğrulaması henüz tamamlanmadığı için doğrulanmamış uygulama uyarısı görülebilir. Yalnız tanıdığın kişinin bu paketini kurduğundan ve doğru uygulamada olduğundan eminsen devam et. Başka bir uygulama veya yazma/silme izni görürsen işlemi durdur.")
 step(3, "Success ekranından terminale dön", "Tarayıcıda <b>Success! All done. Please go back to rclone.</b> yazdığında izin verilmiştir. Terminale dön ve kurulumun READY mesajını bekle. Sonrasında tarayıcı sekmesini kapatabilirsin.")
-note("403 / access_denied", "Genellikle seçilen hesap test kullanıcıları listesinde değildir. Paketi gönderen kişi doğru Google Cloud projesindeki test kullanıcılarını kontrol etmeli. Ardından başlatıcıyı tekrar çalıştır.")
-p("Önemli: Test modunda 7 gün", "sub")
-p("Google OAuth uygulaması <b>Testing</b> durumundayken Drive erişimi için alınan yenileme tokenı genellikle <b>7 gün sonra sona erer</b>. Bu durumda kartı bilgisayara takıp aynı başlatıcıdan YES ile yeniden bağlanman gerekir. Miyoo bu etkileşimli girişi kendi başına yapamaz.")
-p("Test modu dışına çıkma ve varsa Google doğrulama gereklilikleri uygulama sahibinin ayrıca ele alacağı bir konudur. Bu paket sınırsız oturum süresi vaat etmez.", "small")
+note("403 / access_denied", "Seçilen hesabı, uygulama projesinin yayın durumunu ve Google hesabındaki kurumsal güvenlik kısıtlarını kontrol et. Klasör erişimi için ayrıca Drive daveti gerekir. Hata sürerse paketi gönderen kişiye bildir.")
+p("Production ve yeniden giriş", "sub")
+p("Uygulama 14 Kasım 2026'da <b>In production</b> durumuna geçirildi. Bundan sonra alınan yetkilendirmelerde test moduna özgü <b>7 günlük sınır uygulanmaz</b>. Test modunda daha önce bağlandıysan kartı bilgisayara takıp aynı başlatıcıdan <b>YES</b> ile bir kez yeniden giriş yap.")
+p("Oturum yine de izin iptali veya uzun süre kullanılmama gibi nedenlerle sona erebilir. Google doğrulaması tamamlanmadığından uyarı ve 100 kullanıcı sınırı devam eder. Bu paket sınırsız oturum süresi vaat etmez.", "small")
 p("Bu yardımcıda n/24/friends seçmek veya client_id/client_secret elle girmek gerekmez. Bu sorular görünüyorsa paket başlatıcısı yerine rclone config komutunu elle açmış olabilirsin.", "small")
 
 heading(5, "Miyoo'da kullan", "OnionOS oyunları çalıştırmaya devam eder. Friends Library yalnız ortak kütüphaneyi listeler ve seçtiğin dosyayı indirir.")
@@ -97,8 +97,8 @@ note("Dosyalar ve mevcut oyunlar", "NES/FC dosyaları Roms/FC'ye; SNES/SFC dosya
 
 heading(6, "Sorun giderme ve güvenlik", "Bir sorun bildirirken ekrandaki hata metnini paylaş. rclone.conf dosyasını, erişim tokenını veya yenileme tokenını kimseye gönderme.")
 rows = [("Sorun", "Ne yapmalı?"),
-        ("Hesap / oturum hatası", "Kartı bilgisayara tak; aynı FirstSetup başlatıcısını YES ile yeniden çalıştır. Test modunun 7 günlük süresini kontrol et."),
-        ("Klasör görünmüyor / erişim reddedildi", "Aynı Google hesabına Drive klasörü daveti verildiğini kontrol et. OAuth test kullanıcısı olmak tek başına klasör izni vermez."),
+        ("Hesap / oturum hatası", "Kartı bilgisayara tak; aynı FirstSetup başlatıcısını YES ile yeniden çalıştır. Eski Testing oturumu için bir kez yeniden giriş yap."),
+        ("Klasör görünmüyor / erişim reddedildi", "Aynı Google hesabına Drive klasörü daveti verildiğini kontrol et. Google girişinin başarılı olması tek başına klasör izni vermez."),
         ("İndirme / ağ hatası", "Wi-Fi ve tarih/saati kontrol et. Sonra tekrar dene. Çevrimdışıyken önbellekteki listeler görünebilir; indirme için bağlantı gerekir."),
         ("Oyun Games'te yok", "SELECT > Refresh all roms çalıştır. Doğru konsolun Onion emülatörünün kurulu ve dosya biçiminin destekli olduğunu kontrol et."),
         ("Dosya zaten var / alan yetersiz", "Mevcut oyunu koru veya açıkça değiştirmeyi onayla. Yer açman gerekiyorsa kendi dosyalarını kontrol et; saves/BIOS klasörlerini silme.")]

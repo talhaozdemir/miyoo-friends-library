@@ -28,7 +28,7 @@ try {
         '--config',$workConfig,'--no-obscure','--no-output','--log-level','ERROR')
     # Never expose native configuration/token output or put it in a log file.
     & $RclonePath @argsList 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw 'Google connection failed. Check test-user invitation and retry; see the PDF.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Google connection failed. Check your account, app access and internet connection; see the PDF.' }
     if (!(Test-Path -LiteralPath $workConfig)) { throw 'Google setup did not finish. Retry the connection.' }
     $account = Get-Content -LiteralPath $workConfig -Raw
     if ($account -notmatch '(?m)^scope\s*=\s*drive\.readonly\s*$' -or $account -notmatch '"refresh_token"\s*:\s*"[^"\s]+"') { throw 'Google did not provide an offline authorization. Reconnect and approve access.' }

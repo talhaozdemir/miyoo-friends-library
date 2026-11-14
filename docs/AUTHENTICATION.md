@@ -4,6 +4,23 @@ Bu işlem bir defa bilgisayarda yapılır. Normal kullanımda bilgisayar, telefo
 sunucu gerekmez. Her arkadaş kendi Google hesabını yetkilendirir. Tokenları
 sohbete, issue'ya, e-postaya veya Git'e göndermeyin.
 
+## Hazır arkadaş paketi
+
+Arkadaşlara doğrudan verilen ZIP'in `FirstSetup` yardımcıları ortak Desktop
+uygulama tanımını kullanır; yeni OAuth istemcisi oluşturmak gerekmez. Her kişi
+yine kendi davetli Google hesabıyla giriş yapar. Bu kişisel profil/token içeren
+bir paket değildir; dağıtım tanımı kaynak reposuna eklenmez.
+
+Ortak MiyooFriendsLibrary projesi 14 Kasım 2026'da **In production** durumuna
+geçirildi. Tanıtım, gizlilik ve koşul sayfaları
+<https://talhaozdemir.github.io/miyoo-friends-library/> adresindedir.
+Testing sırasında bağlananlar `YES` ile bir kez yeniden giriş yapmalıdır.
+Yeni Production yetkilendirmelerinde Testing'e özgü 7 günlük süre uygulanmaz.
+Google doğrulaması tamamlanmadı: doğrulanmamış uygulama uyarısı, 100 kullanıcı
+sınırı ve diğer iptal/sona erme koşulları devam eder.
+
+Aşağıdaki bölüm kendi OAuth projesini kurmak isteyenler içindir.
+
 ## Google OAuth istemcisi
 
 1. [rclone'ın resmi kendi istemcini oluşturma yönergesini](https://rclone.org/drive/#making-your-own-client-id)

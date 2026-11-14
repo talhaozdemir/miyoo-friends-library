@@ -8,15 +8,19 @@ Windows 10/11 x64: double-click Connect-Windows.cmd and enter the SD drive.
 macOS 12+: open Terminal, type "bash " (with a space), drag Connect-Mac.command
 into Terminal, then press Enter. Select the SD card root when prompted.
 
-Sign in with YOUR Google account. It must be both an OAuth test user and
-invited to the private Drive folder. No new OAuth client is needed.
+Sign in with YOUR Google account. It must be invited to the private Drive
+folder. The shared app is now In production; no test-user entry is required.
+No new OAuth client is needed.
 Wait for READY in Terminal. Safely eject the card, then launch
 Apps > Friends Library on your Miyoo Mini Plus (OnionOS 4.3).
 
 This package has Desktop application metadata, NOT anyone's account tokens.
 Do not share .config/friends-library from your card.
-Google Testing-mode Drive refresh tokens expire after 7 days. Reconnect with
-the same launcher and answer YES when needed.
+The app moved to In production on 14 November 2026. Reconnect once with YES
+if you originally signed in during Testing. New Production authorizations
+are not subject to the Testing-only seven-day expiry. Access can still be
+revoked or expire for other reasons. Google verification remains incomplete;
+an unverified-app warning and 100-user cap remain.
 
 Windows setup has mock-response tests. Mac setup has a bash syntax check;
 real Mac OAuth and end-to-end device download acceptance remain unverified.

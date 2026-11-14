@@ -55,7 +55,7 @@ printf '\nOpening Google sign-in. Choose YOUR invited account.\nWait for Success
 if ! "$rclone" config create friends drive client_id "$client_id" client_secret "$client_secret" \
     scope drive.readonly root_folder_id "$folder_id" config_is_local true config_change_team_drive false \
     --config "$work_config" --no-obscure --no-output --log-level ERROR >/dev/null 2>&1; then
-  fail 'Google connection failed. Check the test-user invitation and retry; see the PDF.'
+  fail 'Google connection failed. Check your account, app access and internet connection; see the PDF.'
 fi
 /usr/bin/grep -Eq '^scope[[:space:]]*=[[:space:]]*drive\.readonly[[:space:]]*$' "$work_config" && \
   /usr/bin/grep -Eq '"refresh_token"[[:space:]]*:[[:space:]]*"[^"[:space:]]+"' "$work_config" || fail 'Google did not provide offline authorization. Reconnect and approve access.'

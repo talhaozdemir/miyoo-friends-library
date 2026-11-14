@@ -14,6 +14,14 @@ sürümleri desteklenmiş sayılmaz. [Cihaz kabul listesi](docs/DEVICE_VALIDATIO
 
 ## Kurulum
 
+[Kaynak kod](https://github.com/talhaozdemir/miyoo-friends-library) ve
+[tanıtım / gizlilik / koşul sayfaları](https://talhaozdemir.github.io/miyoo-friends-library/)
+Public olarak yayınlandı. Ortak OAuth uygulaması 14 Kasım 2026'da **In production**
+durumuna geçirildi. Google doğrulaması tamamlanmadı; giriş uyarısı ve 100 kullanıcı
+sınırı devam eder. Testing sırasında bağlananlar yardımcının `YES` seçeneğiyle
+bir kez yeniden giriş yapmalıdır. Yeni Production yetkilendirmelerinde Testing'e
+özgü 7 günlük süre uygulanmaz; diğer iptal/sona erme koşulları devam eder.
+
 Arkadaşlara hazır dağıtım için `dist/Miyoo-Friends-Library-Arkadas-Kurulum.zip`
 ve `output/pdf/Miyoo-Friends-Library-Kurulum-Rehberi.pdf` kullanılır. ZIP bilgisayara
 çıkarılır; yalnız `App` klasörü SD köküne birleştirilir. Windows'ta
@@ -21,8 +29,8 @@ ve `output/pdf/Miyoo-Friends-Library-Kurulum-Rehberi.pdf` kullanılır. ZIP bilg
 `bash ` ardından sürüklenen `FirstSetup/Connect-Mac.command` çalıştırılır.
 Ortak Desktop OAuth uygulaması ve klasör tanımı hazırdır; her arkadaş kendi
 Google hesabıyla yetkilendirir. Pakette kişisel erişim/yenileme tokenı yoktur.
-Hesap hem OAuth test kullanıcısı hem ortak Drive klasörüne davetli olmalıdır.
-Testing durumunda Drive yenileme tokenları 7 gün sonra sona erebilir.
+Hesap ortak Drive klasörüne davetli olmalıdır. Testing'e geri alınırsa test
+kullanıcısı kaydı ve 7 günlük yenileme tokenı süresi yeniden önem kazanır.
 Windows yardımcısı sahte yanıtlarla test edildi; gerçek Mac OAuth testi bekleniyor.
 
 Genel paket ve kendi OAuth istemcisini kullanmak isteyenler için:
