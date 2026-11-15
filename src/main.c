@@ -251,7 +251,7 @@ static void draw(App *a) {
         v.subtitle=a->level?f->title:"PRIVATE GOOGLE DRIVE LIBRARY";v.rows=f->rows;v.row_count=f->listing.count;v.markers=f->markers;v.selected=f->selected;v.scroll=f->scroll;
         if(!a->level)v.footer="A: OPEN  B: EXIT  X: REFRESH  SELECT: ACCOUNT";
         if(a->level==2)v.footer="A: DETAILS   B: BACK   X: REFRESH";
-        if(a->loading){v.busy=true;v.status="Loading library. B cancels the request.";}
+        if(a->loading){v.busy=true;v.status=a->backend.auth_retried?"Refreshing Google access automatically. B cancels.":"Loading library. B cancels the request.";}
         else update_markers(a,f);
         if(a->level==2&&a->collection==1&&!f->listing.count&&!a->loading){
             snprintf(lines[0],sizeof(lines[0]),"No favorites yet.");snprintf(lines[2],sizeof(lines[2]),"Optional Drive folder: Favorites/");

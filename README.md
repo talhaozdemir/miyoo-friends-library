@@ -6,9 +6,12 @@ dizinine indirir. Oyun başlatma, emülasyon, GameSwitcher, kayıtlar ve favoril
 Onion'ın sorumluluğundadır. Yalnız yasal olarak paylaşmaya yetkili olduğunuz
 oyunları kullanın; pakette ROM veya BIOS yoktur.
 
-Sürüm **0.1.3 (ikon düzeltmesi)**. İkon 64 × 64 şeffaf canvas üzerinde küçültüldü.
-İsteğe bağlı Favorites görünümü, 180 derece cihaz sunumu ve yeni
-ikon içerir. 0.1.3 gezinmesi ve indirmesi için gerçek cihaz kabulü bekleniyor.
+Sürüm **0.1.4 (otomatik erişim yenileme toparlanması)**. Genel HTTP 401 reddinde
+mevcut refresh izni korunup yalnız kısa ömürlü erişim tokenı süresi geçmiş
+işaretlenir ve işlem bir kez tekrar denenir. Gerçek `invalid_grant`, istemci
+ayarı ve SD yazma hataları ayrılır. [Davranış ve kanıt](docs/AUTH_RECOVERY_0.1.4.md).
+İsteğe bağlı Favorites, 180 derece cihaz sunumu ve küçük ikon korunur.
+Bu sürümün gerçek cihazda 1-2 saat sonrası yeniden açılış testi bekleniyor.
 Bu sürümün hedefi Onion 4.3 / Mini Plus'tır; diğer cihazlar ve Onion
 sürümleri desteklenmiş sayılmaz. [Cihaz kabul listesi](docs/DEVICE_VALIDATION.md).
 
@@ -35,7 +38,7 @@ Windows yardımcısı sahte yanıtlarla test edildi; gerçek Mac OAuth testi bek
 
 Genel paket ve kendi OAuth istemcisini kullanmak isteyenler için:
 
-1. `dist/Miyoo-Friends-Library-v0.1.3-iconfix-OnionOS-4.3.zip` ve `.sha256` dosyasını alın.
+1. `dist/Miyoo-Friends-Library-v0.1.4-OnionOS-4.3.zip` ve `.sha256` dosyasını alın.
 2. ZIP'i microSD kartın **köküne** çıkarın. Sonuç `App/FriendsLibrary/` olmalı.
 3. Bilgisayarda [kendi Google hesabınızı yetkilendirin](docs/AUTHENTICATION.md).
 4. Kartı güvenle çıkarıp Miyoo'ya takın. Wi-Fi ve cihaz saati doğru olsun.

@@ -31,7 +31,7 @@ const char *fl_code_name(FlCode code) {
     static const char *names[] = {"ok","configuration","authentication_required","authentication_expired",
         "offline","permission_denied","folder_unavailable","rate_limit","timeout","unsupported_format",
         "unsupported_console","unsafe_path","destination_exists","insufficient_space","io_error",
-        "cancelled","integrity_error","busy","limit_exceeded"};
+        "cancelled","integrity_error","busy","limit_exceeded","access_token_rejected"};
     return code >= 0 && (size_t)code < sizeof(names)/sizeof(*names) ? names[code] : "unknown";
 }
 void fl_listing_free(FlListing *l) { if(l) { free(l->items); memset(l,0,sizeof(*l)); } }

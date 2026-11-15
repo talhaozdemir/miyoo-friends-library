@@ -5,6 +5,16 @@ id=$4
 target=$5
 if test -n "$FL_TEST_PID_FILE"; then printf '%s\n' "$$" > "$FL_TEST_PID_FILE"; fi
 case "$id" in
+  copy_refresh|copy_always401)
+    if test -n "$FL_TEST_AUTH_COUNT"; then printf 'call\n' >> "$FL_TEST_AUTH_COUNT"; fi
+    if ! grep -q '"expiry":"1970-01-01T00:00:01Z"' "$7" || test "$id" = copy_always401; then
+      printf 'partial' > "$target"
+      printf '%s\n' 'googleapi: Error 401: Unauthorized' >&2
+      exit 1
+    fi
+    grep -q 'test-only' "$7" || exit 4
+    cp "$FL_TEST_SOURCE" "$target"
+    ;;
   copy_ok) cp "$FL_TEST_SOURCE" "$target" ;;
   copy_slow)
     printf 'partial' > "$target"

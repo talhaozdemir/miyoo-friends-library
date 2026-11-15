@@ -75,16 +75,28 @@ static void worker(int fd,pid_t parent_pid,const FlConfig *c,const FlItem *item,
         "--inplace","--local-no-preallocate","--transfers","1","--checkers","1","--multi-thread-streams","0",
         "--buffer-size","1M","--timeout",timeout,"--contimeout","10s","--retries","2",
         "--low-level-retries","2","--retries-sleep","2s","--stats","0","--log-level","ERROR",NULL};
-    if(fl_process_start(&process,argv,4096,&done.error))child_finish(fd,temp,&done);
+    bool auth_retried=false;
     for(;;) {
+      if(fl_process_start(&process,argv,4096,&done.error))child_finish(fd,temp,&done);
+      for(;;) {
         if(cancelled) {fl_process_cancel(&process);fl_process_destroy(&process);fl_error(&done.error,FL_ERR_CANCELLED,"Download cancelled. Existing ROMs were preserved.");child_finish(fd,temp,&done);}
         int rc=fl_process_poll(&process,&done.error);
         if(rc<0){fl_process_destroy(&process);child_finish(fd,temp,&done);}
         if(rc==1)break;
         sleep_ms(80);
+      }
+      if(process.exit_code)fl_backend_classify_error(process.exit_code,process.err,&done.error);
+      fl_process_destroy(&process);
+      if(done.error.code==FL_ERR_AUTH_ACCESS&&!auth_retried&&!cancelled) {
+          auth_retried=true;
+          if(fl_credentials_expire_access(c,&done.error))child_finish(fd,temp,&done);
+          if(unlinkat(parent_fd,temp_file,0)&&errno!=ENOENT) {
+              fl_error(&done.error,FL_ERR_IO,"Cannot restart the temporary download safely.");child_finish(fd,temp,&done);
+          }
+          fl_error(&done.error,FL_OK,"");continue;
+      }
+      break;
     }
-    if(process.exit_code)fl_backend_classify_error(process.exit_code,process.err,&done.error);
-    fl_process_destroy(&process);
     if(done.error.code!=FL_OK)child_finish(fd,temp,&done);
     if(lstat(temp,&st)||!S_ISREG(st.st_mode)||S_ISLNK(st.st_mode)||(int64_t)st.st_size!=item->size){fl_error(&done.error,FL_ERR_INTEGRITY,"Download size does not match the library. Refresh and try again.");child_finish(fd,temp,&done);}
     if(cancelled){fl_error(&done.error,FL_ERR_CANCELLED,"Download cancelled.");child_finish(fd,temp,&done);}

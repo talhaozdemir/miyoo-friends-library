@@ -108,6 +108,20 @@ int main(void) {
     assert(!fl_download_start(&download,&config,&system,&game,false,&error));assert(finish(&download,&error,3)==-1);
     assert(error.code==FL_ERR_INTEGRITY);assert(access(download.target,F_OK));fl_download_destroy(&download);
 
+    /* The first transfer can fail after writing partial bytes. A 401 may
+     * refresh automatically once; a persistent 401 must not retry forever. */
+    char auth_count[FL_PATH];join(auth_count,workspace,"/auth-calls");
+    assert(!setenv("FL_TEST_AUTH_COUNT",auth_count,1));save(auth_count,"");
+    save(config.credential_path,"[friends]\ntype=drive\nscope=drive.readonly\nclient_id=test\ntoken={\"access_token\":\"stale\",\"refresh_token\":\"test-only\"}\n");
+    game=item("copy_refresh","Refresh.nes",payload_size,md5);
+    assert(!fl_download_start(&download,&config,&system,&game,false,&error));assert(finish(&download,&error,3)==1);
+    expect_content(auth_count,"call\ncall\n");expect_content(download.target,"complete ROM bytes");fl_download_destroy(&download);
+    save(auth_count,"");game=item("copy_always401","Rejected.nes",payload_size,md5);
+    assert(!fl_download_start(&download,&config,&system,&game,false,&error));assert(finish(&download,&error,3)==-1);
+    assert(error.code==FL_ERR_AUTH_ACCESS);expect_content(auth_count,"call\ncall\n");
+    assert(access(download.target,F_OK));assert(access(download.temporary,F_OK));fl_download_destroy(&download);
+    assert(!unsetenv("FL_TEST_AUTH_COUNT"));
+
     const char *ids[]={"copy_auth","copy_offline","copy_permission"};
     const FlCode expected[]={FL_ERR_AUTH_EXPIRED,FL_ERR_OFFLINE,FL_ERR_PERMISSION};
     for(size_t i=0;i<3;i++) {

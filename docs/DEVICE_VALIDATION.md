@@ -14,6 +14,10 @@ test kayıtlarına koymayın. Yalnız paylaşım hakkı bulunan küçük test do
 - [ ] Wi-Fi kapalı açılış açıklayıcıdır; önbellek varsa listeler görünür.
 - [ ] İlk kişisel OAuth config'i tanınır; hiçbir token loga yazılmaz.
 - [ ] Token sona erince sessiz yenilenir; rclone.conf güvenle güncellenir.
+- [ ] 0.1.4: ilk girişten en az 2 saat sonra uygulamayı tekrar aç; bilgisayara
+      ihtiyaç olmadan listeleme ve indirmeyi dene, cihaz tarih/saatini kaydet.
+- [ ] 0.1.4: 401 sonrası tek otomatik yenileme görünümü, iptal ve yeniden açılış
+      çalışır; gerçek invalid_grant hatası ayrı ve tokensız gösterilir.
 - [ ] İptal edilmiş token yeniden bilgisayarda yetkilendirme mesajı verir.
 - [ ] My Drive'a kopyalamadan davetli kök ve dinamik arkadaşlar listelenir.
 - [ ] Boş/izinsiz/erişilemeyen klasör ve bilinmeyen konsol anlaşılırdır.

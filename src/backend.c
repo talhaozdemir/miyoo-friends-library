@@ -255,9 +255,75 @@ static bool contains(const char *s,const char *needle) {
     return false;
 }
 
+int fl_credentials_expire_access(const FlConfig *c,FlError *error) {
+    char *text=NULL,*scan=NULL,*line,*save=NULL,*json=NULL,*updated=NULL,*access_value=NULL;
+    struct stat before,after;
+    cJSON *token=NULL;
+    bool selected=false;
+    int result=-1;
+    if(fl_credentials_check(c,error))return -1;
+    if(lstat(c->credential_path,&before) || !S_ISREG(before.st_mode) || S_ISLNK(before.st_mode))goto failed;
+    if(fl_read_file(c->credential_path,131072,&text,error))return -1;
+    scan=strdup(text);if(!scan)goto failed;
+    for(line=strtok_r(scan,"\n",&save);line;line=strtok_r(NULL,"\n",&save)) {
+        char *p=trim(line),*eq;
+        if(*p=='[') {char *end=strchr(p,']');if(!end)goto failed;*end=0;selected=!strcmp(trim(p+1),c->remote);continue;}
+        if(!selected || !(eq=strchr(p,'=')))continue;
+        *eq=0;if(strcmp(trim(p),"token"))continue;
+        token=cJSON_Parse(trim(eq+1));
+        cJSON *refresh=cJSON_GetObjectItemCaseSensitive(token,"refresh_token");
+        if(!cJSON_IsObject(token)||!cJSON_IsString(refresh)||!*refresh->valuestring)goto failed;
+        /* rclone's GetToken treats an empty access_token as its legacy format
+         * and loses snake_case refresh_token. Keep a nonempty access value and
+         * expire it explicitly; never blank or replace refresh permission. */
+        cJSON *access=cJSON_GetObjectItemCaseSensitive(token,"access_token");
+        access_value=strdup(cJSON_IsString(access)&&*access->valuestring?access->valuestring:"friends-library-refresh-required");
+        if(!access_value)goto failed;
+        while(cJSON_GetObjectItemCaseSensitive(token,"access_token"))cJSON_DeleteItemFromObjectCaseSensitive(token,"access_token");
+        if(!cJSON_AddStringToObject(token,"access_token",access_value))goto failed;
+        while(cJSON_GetObjectItemCaseSensitive(token,"expiry"))cJSON_DeleteItemFromObjectCaseSensitive(token,"expiry");
+        if(!cJSON_AddStringToObject(token,"expiry","1970-01-01T00:00:01Z"))goto failed;
+        json=cJSON_PrintUnformatted(token);if(!json)goto failed;
+        size_t prefix=(size_t)(line-scan);
+        char *suffix=strchr(text+prefix,'\n');
+        if(suffix) {if(suffix>text+prefix && suffix[-1]=='\r')--suffix;} else suffix=text+strlen(text);
+        size_t length=prefix+8+strlen(json)+strlen(suffix);
+        if(length>131072)goto failed;
+        updated=malloc(length+1);if(!updated)goto failed;
+        memcpy(updated,text,prefix);
+        snprintf(updated+prefix,length+1-prefix,"token = %s%s",json,suffix);
+        /* Do not replace an account changed while this operation was pending. */
+        if(lstat(c->credential_path,&after)||before.st_dev!=after.st_dev||before.st_ino!=after.st_ino||
+           before.st_size!=after.st_size||before.st_mtime!=after.st_mtime)goto failed;
+        result=fl_write_atomic(c->credential_path,updated,length,error);
+        if(result)goto failed;
+        fl_error(error,FL_OK,"");goto done;
+    }
+failed:
+    fl_error(error,FL_ERR_IO,"Cannot prepare automatic login refresh. Check SD card free space and write access.");
+done:
+    free(text);free(scan);free(json);free(updated);free(access_value);cJSON_Delete(token);return result;
+}
+
+static bool access_rejected(const char *s) {
+    return contains(s,"error 401") || contains(s,"status code 401") || contains(s,"status 401") ||
+           contains(s,"http 401") || contains(s,"401 unauthorized") || contains(s,"401: unauthorized") ||
+           contains(s,"\"status\":\"UNAUTHENTICATED\"") || contains(s,"\"status\": \"UNAUTHENTICATED\"");
+}
+
 void fl_backend_classify_error(int exit_code,const char *s,FlError *error) {
-    if(contains(s,"invalid_grant") || contains(s,"token has been expired") || contains(s,"unauthorized") || contains(s,"401"))
-        fl_error(error,FL_ERR_AUTH_EXPIRED,"Google authorization expired or was revoked. Reconnect on a computer.");
+    if(contains(s,"invalid_client") || contains(s,"unauthorized_client"))
+        fl_error(error,FL_ERR_CONFIG,"Google rejected OAuth app settings (invalid_client). Check the Desktop client ID and secret.");
+    else if(contains(s,"invalid_scope") || contains(s,"unsupported_grant_type"))
+        fl_error(error,FL_ERR_CONFIG,"Google rejected OAuth permission settings. Check the read-only Desktop app configuration.");
+    else if(contains(s,"invalid_grant") || contains(s,"token has been expired"))
+        fl_error(error,FL_ERR_AUTH_EXPIRED,"Google rejected refresh permission (invalid_grant). Reconnect on a computer.");
+    else if(contains(s,"no refresh token"))
+        fl_error(error,FL_ERR_AUTH_REQUIRED,"Offline refresh permission is missing. Complete Google setup on a computer.");
+    else if(contains(s,"failed saving config") || contains(s,"couldn't store token"))
+        fl_error(error,FL_ERR_IO,"Cannot save refreshed login. Check SD card free space and write access.");
+    else if(access_rejected(s))
+        fl_error(error,FL_ERR_AUTH_ACCESS,"Google access token was rejected (401). Check device date/time and OAuth app settings, then retry.");
     else if(contains(s,"rateLimitExceeded") || contains(s,"userRateLimitExceeded") || contains(s,"downloadQuotaExceeded") || contains(s,"429"))
         fl_error(error,FL_ERR_RATE_LIMIT,"Google Drive quota or rate limit reached. Try again later.");
     else if(contains(s,"403") || contains(s,"forbidden") || contains(s,"permission denied") || contains(s,"insufficient permissions"))
@@ -272,7 +338,7 @@ void fl_backend_classify_error(int exit_code,const char *s,FlError *error) {
         fl_error(error,FL_ERR_OFFLINE,"Secure connection failed. Check device date, time and CA certificates.");
     else if(exit_code==127 || exit_code==126)
         fl_error(error,FL_ERR_CONFIG,"The packaged rclone executable is missing or cannot run.");
-    else fl_error(error,FL_ERR_IO,"Google Drive request failed. Retry or reconnect your account.");
+    else fl_error(error,FL_ERR_IO,"Google Drive request failed (request_failed). Try the request again.");
 }
 
 static int cache_path(FlBackend *b,FlError *error) {
@@ -313,19 +379,12 @@ static void cache_save(FlBackend *b,const char *raw) {
     cJSON_Delete(j);
 }
 
-int fl_backend_list_start(FlBackend *b,const FlConfig *c,const char *folder,bool force,FlError *error) {
+static int start_list_worker(FlBackend *b,FlError *error) {
+    const FlConfig *c=&b->config;
     char remote[FL_ID+96],timeout[24];
     const char *argv[32];
     size_t n=0;
-    if(!b || !c || !fl_id_valid(folder)) { fl_error(error,FL_ERR_CONFIG,"Invalid folder identifier."); return -1; }
-    if(b->active) { fl_error(error,FL_ERR_BUSY,"Another operation is running."); return -1; }
-    fl_backend_destroy(b); b->initialized=true; b->config=*c; strcpy(b->folder_id,folder);
-    if(fl_credentials_check(c,error) || cache_path(b,error)) return -1;
-    (void)cache_load(b);
-    if(b->listing.from_cache && !b->listing.stale && !force) {
-        b->done=true; fl_error(&b->result,FL_OK,""); fl_error(error,FL_OK,""); return 0;
-    }
-    snprintf(remote,sizeof(remote),"%s,root_folder_id=%s:",c->remote,folder);
+    snprintf(remote,sizeof(remote),"%s,root_folder_id=%s:",c->remote,b->folder_id);
     snprintf(timeout,sizeof(timeout),"%us",c->timeout_seconds);
     argv[n++]=c->rclone_path; argv[n++]="lsjson"; argv[n++]=remote;
     argv[n++]="--config"; argv[n++]=c->credential_path; argv[n++]="--hash";
@@ -334,11 +393,26 @@ int fl_backend_list_start(FlBackend *b,const FlConfig *c,const char *folder,bool
     argv[n++]="--timeout"; argv[n++]=timeout; argv[n++]="--retries"; argv[n++]="2";
     argv[n++]="--low-level-retries"; argv[n++]="2"; argv[n++]="--log-level"; argv[n++]="ERROR";
     argv[n++]="--retries-sleep"; argv[n++]="1s"; argv[n]=NULL;
-    if(fl_process_start(&b->process,argv,LIST_LIMIT,error)) {
+    if(fl_process_start(&b->process,argv,LIST_LIMIT,error))return -1;
+    b->active=true;b->done=false;b->started=time(NULL);
+    if(!b->auth_retried)b->deadline=monotime()+c->timeout_seconds*3+15;
+    fl_error(error,FL_OK,"");return 0;
+}
+
+int fl_backend_list_start(FlBackend *b,const FlConfig *c,const char *folder,bool force,FlError *error) {
+    if(!b || !c || !fl_id_valid(folder)) { fl_error(error,FL_ERR_CONFIG,"Invalid folder identifier."); return -1; }
+    if(b->active) { fl_error(error,FL_ERR_BUSY,"Another operation is running."); return -1; }
+    fl_backend_destroy(b); b->initialized=true; b->config=*c; strcpy(b->folder_id,folder);
+    if(fl_credentials_check(c,error) || cache_path(b,error)) return -1;
+    (void)cache_load(b);
+    if(b->listing.from_cache && !b->listing.stale && !force) {
+        b->done=true; fl_error(&b->result,FL_OK,""); fl_error(error,FL_OK,""); return 0;
+    }
+    if(start_list_worker(b,error)) {
         if(b->listing.from_cache) { b->listing.stale=true; b->cache_fallback=true; if(error) b->result=*error; b->done=true; return 0; }
         return -1;
     }
-    b->active=true; b->started=time(NULL); b->deadline=monotime()+c->timeout_seconds*3+15; fl_error(error,FL_OK,""); return 0;
+    return 0;
 }
 
 static int remove_credentials(FlBackend *b,FlError *error) {
@@ -385,7 +459,16 @@ int fl_backend_poll(FlBackend *b,FlError *error) {
     else if(b->timed_out) fl_error(&b->result,FL_ERR_TIMEOUT,"Library request timed out. Check Wi-Fi and try again.");
     else if(b->process.cancelled) fl_error(&b->result,FL_ERR_CANCELLED,"Library request cancelled.");
     else if(result<0) b->result=process_error;
-    else if(b->process.exit_code) fl_backend_classify_error(b->process.exit_code,b->process.err,&b->result);
+    else if(b->process.exit_code) {
+        fl_backend_classify_error(b->process.exit_code,b->process.err,&b->result);
+        if(b->result.code==FL_ERR_AUTH_ACCESS&&!b->auth_retried) {
+            b->auth_retried=true;
+            if(!fl_credentials_expire_access(&b->config,&b->result) && !start_list_worker(b,&b->result)) {
+                if(error)fl_error(error,FL_OK,"");
+                return 0;
+            }
+        }
+    }
     else {
         FlListing fresh={0};
         if(!fl_listing_parse(b->process.out,&fresh,&b->result)) {

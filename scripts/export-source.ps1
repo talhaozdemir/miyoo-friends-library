@@ -2,9 +2,9 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $distDir = Join-Path $projectRoot 'dist'
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
-$zipPath = Join-Path $distDir 'Miyoo-Friends-Library-v0.1.3-iconfix-source.zip'
-$relativePaths = @('Makefile','README.md','LICENSE','THIRD_PARTY_NOTICES.md','config.example.json','.gitignore')
-foreach ($directory in @('src','include','vendor','tests','scripts','docs','assets','distribution')) {
+$zipPath = Join-Path $distDir 'Miyoo-Friends-Library-v0.1.4-source.zip'
+$relativePaths = @('Makefile','README.md','LICENSE','THIRD_PARTY_NOTICES.md','config.example.json','.gitignore','.gitattributes')
+foreach ($directory in @('src','include','vendor','tests','scripts','docs','assets','distribution','sites')) {
     $relativePaths += Get-ChildItem -LiteralPath (Join-Path $projectRoot $directory) -File -Recurse | ForEach-Object {
         [IO.Path]::GetRelativePath($projectRoot, $_.FullName).Replace('\','/')
     }

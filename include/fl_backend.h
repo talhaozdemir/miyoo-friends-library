@@ -23,6 +23,9 @@ void fl_process_destroy(FlProcess *process);
 
 int fl_config_load(const char *sd_root, const char *app_dir, FlConfig *config, FlError *error);
 int fl_credentials_check(const FlConfig *config, FlError *error);
+/* Invalidate only the short-lived access token. Preserve refresh permission and
+ * all other remote settings; never launch an interactive login. */
+int fl_credentials_expire_access(const FlConfig *config, FlError *error);
 void fl_backend_classify_error(int exit_code, const char *stderr_text, FlError *error);
 
 typedef struct {
@@ -32,7 +35,7 @@ typedef struct {
     char folder_id[FL_ID], cache_path[FL_PATH];
     time_t started;
     double deadline;
-    bool initialized, active, done, disconnect, revoke_failed, timed_out, cache_fallback;
+    bool initialized, active, done, disconnect, revoke_failed, timed_out, cache_fallback, auth_retried;
     FlError result;
 } FlBackend;
 
