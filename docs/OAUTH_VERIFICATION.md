@@ -15,7 +15,8 @@ tamamlandığı anlamına gelmez. Kullanıcı QR girişinin çalıştığını b
 - Drive özel kalır. Her katılımcı kendi hesabıyla, davet edildiği klasöre erişir.
 
 Cloud Console başlangıçta Data Access listelerinde hiçbir kapsam göstermiyordu;
-kodda istenen readonly izin başvuru listesine bildirilmelidir. Bu bir izin
+kodda istenen readonly izin ve 912 karakterlik gerekçe Data Access üzerinden
+kaydedildi; "Data access changes saved!" görüldü. Bu bir izin
 genişletme veya mevcut kullanıcılara yeniden izin verme işlemi değildir.
 
 ## Marka sahipliği
@@ -24,8 +25,11 @@ Canlı Branding > Verify branding kontrolü şu eksikliği bildirdi:
 "The website of your home page URL ... is not registered to you."
 Google, sahiplik doğrulamasından sonra yeniden kontrol için 24 saat beklenmesini
 istiyor. Search Console URL-prefix mülkü mevcut ana sayfa için açıldı. Google'ın
-verdiği `google9a8124ee0004bb33.html` dosyası aynı Pages dizinine yayınlanmak üzere
-eklendi. Dosya herkese açık sahiplik kanıtıdır; OAuth tokenı veya client secret
+verdiği `google9a8124ee0004bb33.html` dosyası aynı Pages dizinine yayınlandı;
+HTTP 200 ve birebir dosya eşleşmesi doğrulandı. Search Console "Sahiplik doğrulandı"
+sonucunu gösterdi. Bu yalnız URL-prefix site sahipliğidir; OAuth marka veya
+kapsam onayı henüz verilmedi. Google yönergesine göre yeniden marka kontrolü
+için 24 saat beklenir. Dosya herkese açık sahiplik kanıtıdır; OAuth tokenı veya client secret
 değildir. Doğrulama devam ettiği sürece dosyayı silmeyin.
 
 Sahiplik, marka onayı, restricted-scope onayı ve varsa CASA birbirinden ayrı
@@ -109,3 +113,14 @@ Resmî kaynaklar:
 - https://support.google.com/cloud/answer/13807376
 - https://support.google.com/cloud/answer/13464018
 - https://developers.google.com/workspace/drive/api/guides/api-specific-auth
+
+## Güncel başvuru durumu
+
+- Site sahipliği: Search Console URL-prefix doğrulandı.
+- İzin listesi/gerekçe: canlı Data Access'te kaydedildi.
+- Google marka onayı: bekliyor; sahiplik kontrolünün yayılması için 24 saat.
+- Gerçek demo video bağlantısı: eksik, kullanıcıdan istendi.
+- Restricted-scope inceleme/CASA sonucu: alınmadı.
+- Nihai inceleme başvurusu gönderilmedi; doğrulama tamamlandı denemez.
+- Çalışan Google client'ları, callback adresi, hesap tokenları ve uygulama kodu
+  değiştirilmedi. Bu hazırlık için yeni Miyoo ZIP kurulumu gerekmez.
