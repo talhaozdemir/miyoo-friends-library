@@ -52,6 +52,14 @@ encrypted expired records can remain until cleanup (and Cloudflare backups
 may retain older database states). This does not protect against a compromised
 Worker administrator holding the encryption key.
 
+The phone form uses `Referrer-Policy: same-origin`. Do not replace it with
+`no-referrer`: browsers can then send native form POSTs with `Origin: null`,
+causing the strict Origin check to reject the app's own form. Cross-site
+Referer data is still suppressed; null/missing/foreign Origin, missing cookies
+and invalid nonces remain rejected. This was reproduced in real Chrome and
+verified through to Google's account chooser, without selecting an account.
+See [the browser behavior](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy).
+
 After confirmation the Miyoo stores the real Google refresh token on its SD;
 `rclone.conf` uses this service's `/v1/token` endpoint. The device has **no Web
 client secret**. D1 retains only a SHA-256 refresh-token digest and grant state

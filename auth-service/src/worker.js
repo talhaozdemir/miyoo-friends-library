@@ -55,7 +55,7 @@ function code(v) { return typeof v==='string'&&/^[A-Za-z0-9_-]{43}$/.test(v); }
 function tokens(v) { return object(v)&&typeof v.access_token==='string'&&/^[A-Za-z0-9._~+/=-]{1,8192}$/.test(v.access_token)&&typeof v.refresh_token==='string'&&v.refresh_token.length>0&&v.refresh_token.length<=4096&&v.token_type==='Bearer'&&typeof v.expires_in==='number'&&v.expires_in>0&&v.expires_in<=86400&&typeof v.issued_at==='number'; }
 /** @param {unknown} data @param {number} [status] @param {Record<string,string>} [extra] */
 function json(data,status=200,extra={}) { return new Response(JSON.stringify(data),{status,headers:{...security(),'Content-Type':'application/json; charset=utf-8',...extra}}); }
-function security() { return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'none'",'Strict-Transport-Security':'max-age=31536000'}; }
+function security() { return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Referrer-Policy':'same-origin','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'none'",'Strict-Transport-Security':'max-age=31536000'}; }
 /** @param {string} text */
 function escape(text) { return text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 /** @param {string} title @param {string} content @param {Record<string,string>} [extra] @param {number} [status] */
@@ -155,7 +155,7 @@ export function createHandler(options={}) {
           if(match[2]&&request.method==='POST'){
             const c=await cookie(request,key,now),body=new URLSearchParams(await bounded(request));
             const nonce=body.get('nonce');
-            if(request.headers.get('Origin')!==env.PUBLIC_ORIGIN||!c||c.id!==p.id||!nonce||!await proof(key,nonce,await sign(key,c.nonce)))return json({error:'browser_proof_required'},403);
+            if(request.headers.get('Origin')!==env.PUBLIC_ORIGIN||!c||c.id!==p.id||!nonce||!await proof(key,nonce,await sign(key,c.nonce)))return html('Tarayıcı oturumu yenilenmeli',`<p>Giriş sayfasını telefonunda Safari veya Chrome ile yeniden aç. Kamera önizlemesi yerine normal tarayıcıyı kullan.</p><p><a href="/pair/${p.id}">Giriş sayfasını yeniden aç</a></p><p>Sorun sürerse Miyoo’da B ile geri dönüp yeni bir QR oluştur. Önceki hesabın değiştirilmedi.</p>`,{},403);
             const state=random(),verifier=random();
             const changed=await env.DB.prepare("UPDATE pairings SET status='authorizing',browser_mac=?,state_hash=?,oauth_cipher=? WHERE id=? AND status='pending'").bind(await sign(key,c.nonce),await sign(key,state),await seal(key,`oauth:${p.id}`,{verifier}),p.id).run();
             if(!changed.meta.changes)return json({error:'login_already_started'},409);

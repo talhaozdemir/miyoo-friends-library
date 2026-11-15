@@ -46,3 +46,18 @@ Gerçek Google authorization-code exchange, iPhone Safari/Android Chrome ve
 Miyoo Mini Plus uçtan uca giriş, gerçek cihazda iki saat sonrası yenileme,
 ROM indirme, batarya, idle CPU ve RAM ölçümü bekleniyor.
 [Cihaz kabul listesi](DEVICE_VALIDATION.md) bu ayrımı korur.
+
+## Telefon formu düzeltmesi (15 Kasım 2026)
+
+Kullanıcı `browser_proof_required` bildirdi. Canlı serviste bize ait geçici
+pairing ile Chrome'da hata yeniden üretildi: QR GET sayfası açılıyor, form POST
+403 veriyordu. `Referrer-Policy: no-referrer`, native formun Origin bilgisini
+`null` yaparak sunucunun strict Origin kontrolüne takılıyordu. Policy `same-origin`
+oldu; Origin/cookie/nonce doğrulaması korunuyor. Başarısız tarayıcı doğrulaması
+artık ham JSON yerine açıklayıcı HTML ve yeniden açma bağlantısı gösterir.
+
+12 Worker testi ve typecheck geçti; null/missing/cross-site Origin, eksik cookie
+ve yanlış nonce hâlâ reddedilir. Canlı düzeltme sonrası aynı Chrome pairing'i
+Google hesap seçme ekranına geçti. Hesap seçilmedi, Google token exchange veya
+Miyoo'da yeni hesabın kaydedilmesi test edilmiş sayılmaz. Geçici pairing kapatıldı.
+Bu yalnız sunucu düzeltmesidir: SD güncellemesi, ARM derlemesi veya yeni ZIP gerekmez.

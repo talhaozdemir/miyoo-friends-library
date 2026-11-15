@@ -46,6 +46,9 @@ function fixture(mode='ok'){
   async function authorize(p){
     const get=await request('/pair/'+p.pairing_id),html=await get.text(),cookie=get.headers.get('Set-Cookie').split(';')[0];
     assert.ok(html.includes(p.display_code));
+    // no-referrer makes the browser's native POST Origin "null".
+    // same-origin retains our origin while suppressing cross-site Referer data.
+    assert.equal(get.headers.get('Referrer-Policy'),'same-origin');
     // Chrome also checks form-action against the OAuth redirect target.
     assert.ok(get.headers.get('Content-Security-Policy').includes("form-action 'self' https://accounts.google.com;"));
     const nonce=html.match(/name="nonce" value="([^"]+)"/)[1];
@@ -73,6 +76,20 @@ test('first pairing, PKCE browser flow, explicit device claim, retry and ack',as
 }finally{f.close();}});
 test('pending claims and wrong device proofs cannot obtain credentials',async()=>{const f=fixture();try{const p=await f.create();assert.equal((await f.request('/v1/pair/claim',f.device(p))).status,409);assert.equal((await f.request('/v1/pair/status',{...f.device(p),device_secret:'b'.repeat(43)})).status,404);assert.equal((await f.request('/v1/pair/create',{device_secret:'a',root_folder_id:'root_fixture'})).status,400);assert.equal((await f.request('/v1/pair/create',{device_secret:'a'.repeat(43),root_folder_id:'other_root'})).status,400);}finally{f.close();}});
 test('CSRF and callback replay are rejected',async()=>{const f=fixture();try{const p=await f.create();const bad=await f.worker.fetch(new Request(f.env.PUBLIC_ORIGIN+'/pair/'+p.pairing_id+'/authorize',{method:'POST',headers:{Origin:'https://evil.test'},body:'nonce=x'}),f.env);assert.equal(bad.status,403);const a=await f.authorize(p);assert.equal((await f.callback(a,{state:'b'.repeat(43)})).status,400);assert.equal((await f.callback(a)).status,200);assert.equal((await f.callback(a)).status,400);assert.equal(f.calls.filter(x=>x.url==='https://oauth2.googleapis.com/token').length,1);}finally{f.close();}});
+
+test('browser recovery is readable; null/missing/cross-site Origin, wrong nonce and missing cookie remain rejected',async()=>{
+  const f=fixture();try{
+    const p=await f.create(),page=await f.request('/pair/'+p.pairing_id),text=await page.text();
+    const cookie=page.headers.get('Set-Cookie').split(';')[0],nonce=text.match(/name="nonce" value="([^"]+)"/)[1];
+    for(const [origin,cookieHeader,formNonce] of [[null,cookie,nonce],['null',cookie,nonce],['https://evil.test',cookie,nonce],[f.env.PUBLIC_ORIGIN,'',nonce],[f.env.PUBLIC_ORIGIN,cookie,'forged']]){
+      const headers={'Content-Type':'application/x-www-form-urlencoded',Cookie:cookieHeader};if(origin!==null)headers.Origin=origin;
+      const response=await f.worker.fetch(new Request(f.env.PUBLIC_ORIGIN+'/pair/'+p.pairing_id+'/authorize',{method:'POST',headers,body:new URLSearchParams({nonce:formNonce})}),f.env);
+      assert.equal(response.status,403);assert.match(response.headers.get('Content-Type'),/^text\/html/);assert.ok((await response.text()).includes('Giriş sayfasını yeniden aç'));
+      assert.equal(f.db.raw.prepare('SELECT status FROM pairings').get().status,'pending');assert.equal(f.calls.length,0);
+    }
+    assert.equal((await f.authorize(p)).target.origin,'https://accounts.google.com');
+  }finally{f.close();}
+});
 test('Google denial, missing refresh permission, excessive scope and wrong account do not create grants',async()=>{for(const mode of ['no_refresh','wide_scope','folder_denied']){const f=fixture(mode);try{const p=await f.create(),a=await f.authorize(p);assert.equal((await f.callback(a)).status,403);const r=await f.request('/v1/pair/status',f.device(p));assert.equal((await r.json()).status,'error');assert.equal(f.db.raw.prepare('SELECT count(*) AS n FROM grants').get().n,0);assert.equal(f.db.raw.prepare('SELECT token_cipher FROM pairings').get().token_cipher,null);}finally{f.close();}}
  const f=fixture();try{const p=await f.create(),a=await f.authorize(p);assert.equal((await f.callback(a,{error:'access_denied'})).status,403);assert.equal(f.calls.length,0);}finally{f.close();}});
 test('cancel and expiration prevent token delivery and prune encrypted state',async()=>{const f=fixture();try{const p=await f.create(),a=await f.authorize(p);assert.equal((await f.request('/v1/pair/cancel',f.device(p))).status,200);assert.equal((await f.callback(a)).status,400);const {p:expired}=await f.ready();f.advance(301);assert.equal((await f.request('/v1/pair/claim',f.device(expired))).status,404);await f.worker.scheduled({},f.env);assert.equal(f.db.raw.prepare('SELECT count(*) AS n FROM pairings').get().n,0);}finally{f.close();}});
