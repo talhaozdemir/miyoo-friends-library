@@ -24,9 +24,14 @@ function fixture(mode='ok'){
       const body=new URLSearchParams(init.body);assert.equal(body.get('client_secret'),env.GOOGLE_CLIENT_SECRET);
       if(body.get('grant_type')==='authorization_code'){
         assert.equal(body.get('code'),'MOCK_CODE');assert.match(body.get('code_verifier'),/^[A-Za-z0-9_-]{43}$/);
+        if(mode==='bad_client'||mode==='bad_code')return Response.json({error:mode==='bad_client'?'invalid_client':'invalid_grant',error_description:'DO_NOT_LOG MOCK_PRIVATE_WEB_SECRET MOCK_REFRESH'},{status:400});
+        if(mode==='auth_offline')throw Error('DO_NOT_LOG MOCK_REFRESH');
         const token={access_token:'MOCK_ACCESS',refresh_token:'MOCK_REFRESH',token_type:'Bearer',expires_in:3600,scope:'https://www.googleapis.com/auth/drive.readonly'};
         if(mode==='no_refresh')delete token.refresh_token;
         if(mode==='wide_scope')token.scope+=' https://www.googleapis.com/auth/drive';
+        if(mode==='no_scope')delete token.scope;
+        if(mode==='no_drive_scope')token.scope='openid';
+        if(mode==='scope_whitespace')token.scope=' '+token.scope+' ';
         return Response.json(token);
       }
       assert.equal(body.get('grant_type'),'refresh_token');assert.equal(body.get('refresh_token'),'MOCK_REFRESH');
@@ -98,3 +103,16 @@ test('refresh proxy keeps the Web client secret off the device and accepts only 
 test('real invalid_grant and temporary network failures are distinguished without credential logs',async()=>{for(const mode of ['revoked','offline']){const f=fixture(mode);try{const {p}=await f.ready();await f.request('/v1/pair/claim',f.device(p));const response=await f.refresh(),body=await response.text();assert.equal(response.status,mode==='revoked'?400:503);assert.equal(JSON.parse(body).error,mode==='revoked'?'invalid_grant':'service_unavailable');assert.ok(!body.includes('MOCK_REFRESH'));assert.equal(f.db.raw.prepare('SELECT revoked FROM grants').get().revoked,mode==='revoked'?1:0);}finally{f.close();}}});
 test('ciphertext substitution fails authentication and never exposes partial credentials',async()=>{const f=fixture();try{const {p}=await f.ready();f.db.raw.prepare('UPDATE pairings SET token_cipher=?').run('AAAA.AAAA');const response=await f.request('/v1/pair/claim',f.device(p));assert.equal(response.status,503);assert.ok(!(await response.text()).includes('MOCK_REFRESH'));assert.equal(f.db.raw.prepare('SELECT count(*) AS n FROM grants').get().n,0);}finally{f.close();}});
 test('creation budget stays bounded on the Free plan',async()=>{const f=fixture();try{for(let i=0;i<15;i++)await f.create();assert.equal((await f.request('/v1/pair/create',{device_secret:'a'.repeat(43),root_folder_id:'root_fixture'})).status,429);assert.equal(f.db.raw.prepare('SELECT count(*) AS n FROM pairings').get().n,15);}finally{f.close();}});
+
+
+test('authorization failures expose only safe actionable categories and preserve readonly scope checks',async()=>{
+  for(const [mode,reason] of [['bad_client','oauth_client_configuration'],['bad_code','authorization_code_rejected'],['auth_offline','google_temporarily_unavailable'],['no_scope','readonly_permission_missing'],['no_drive_scope','readonly_permission_missing'],['wide_scope','readonly_permission_missing']]){
+    const f=fixture(mode);try{
+      const p=await f.create(),a=await f.authorize(p),response=await f.callback(a),text=await response.text();
+      assert.equal(response.status,403);assert.ok(text.includes(reason));assert.ok(!text.includes('MOCK_REFRESH'));assert.ok(!text.includes('MOCK_PRIVATE_WEB_SECRET'));assert.ok(!text.includes('DO_NOT_LOG'));
+      const row=f.db.raw.prepare('SELECT error_code,token_cipher,oauth_cipher FROM pairings').get();assert.equal(row.error_code,reason);assert.equal(row.token_cipher,null);assert.equal(row.oauth_cipher,null);
+      assert.equal(f.db.raw.prepare('SELECT count(*) AS n FROM grants').get().n,0);
+    }finally{f.close();}
+  }
+  const f=fixture('scope_whitespace');try{await f.ready();}finally{f.close();}
+});

@@ -1,5 +1,16 @@
 # Gerçek cihaz kabul listesi
 
+0.3.1 sade arayüz (host render/controller geçti; fiziksel cihaz kabulü bekleniyor):
+
+- [ ] Account yalnız Connect with phone / Help / Disconnect account gösterir.
+- [ ] İlk açılış A: Connect ve hesap menüsündeki Connect doğrudan QR açar.
+- [ ] QR ekranındaki kod, bekleme/onay durumu ve A/B anlaşılırdır.
+- [ ] QR sırasında Help açılıp dönülünce aynı giriş/QR korunur.
+- [ ] Kısalan indirme detaylarında oyun, konsol, arkadaş, boyut, boş alan,
+      hedef ve mevcut dosya durumu görünür; overwrite ayrıca onay ister.
+- [ ] Önceki sürüm üstüne update Google bağlantısını, ROM/save ve ayarları korur.
+- [ ] Bilgisayar yardımcıları çalışır; uygulamada SSH ayarı veya teknik menü yoktur.
+
 0.3.0 HTTPS telefon girişi: aşağıdaki maddeler fiziksel cihazda **henüz denenmedi**.
 
 - [ ] Hiç settings/token olmadan hazır HTTPS profili ile QR oluşur.

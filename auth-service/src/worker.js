@@ -173,17 +173,31 @@ export function createHandler(options={}) {
             if(url.searchParams.has('error'))throw new Error('authorization_declined');
             const authorizationCode=url.searchParams.get('code');if(!authorizationCode||authorizationCode.length>4096)throw new Error('authorization_failed');
             const pkce=await open(key,`oauth:${p.id}`,p.oauth_cipher);if(!object(pkce)||typeof pkce.verifier!=='string')throw new Error('authorization_failed');
-            const g=await google(env,new URL(TOKEN_URL),new URLSearchParams({grant_type:'authorization_code',code:authorizationCode,client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET,redirect_uri:`${env.PUBLIC_ORIGIN}/oauth/callback`,code_verifier:pkce.verifier}));
-            if(!g.ok||!object(g.data)||g.data.scope!==SCOPE)throw new Error('authorization_failed');
+            let g;
+            try{g=await google(env,new URL(TOKEN_URL),new URLSearchParams({grant_type:'authorization_code',code:authorizationCode,client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET.trim(),redirect_uri:`${env.PUBLIC_ORIGIN}/oauth/callback`,code_verifier:pkce.verifier}));}
+            catch{throw new Error('google_temporarily_unavailable');}
+            if(!g.ok)throw new Error(object(g.data)&&g.data.error==='invalid_client'?'oauth_client_configuration':object(g.data)&&g.data.error==='invalid_grant'?'authorization_code_rejected':'authorization_failed');
+            if(!object(g.data)||typeof g.data.scope!=='string'||g.data.scope.trim()!==SCOPE)throw new Error('readonly_permission_missing');
             const v={...g.data,issued_at:now};if(!tokens(v))throw new Error('refresh_permission_missing');
             if(!await folder(env,v.access_token))throw new Error('shared_folder_denied');
             const result=await env.DB.prepare("UPDATE pairings SET status='ready',token_cipher=?,oauth_cipher=NULL WHERE id=? AND status='processing' AND expires>?").bind(await seal(key,`tokens:${p.id}`,v),p.id,now).run();
             if(!result.meta.changes)return html('Bağlantı iptal edildi','<p>Miyoo’da yeni bir giriş başlat.</p>',{},410);
             return html('Google onayı tamamlandı',`<p class="code">${p.display_code}</p><p>Miyoo’daki kodla karşılaştır ve cihazında <strong>A</strong> ile bağlantıyı kaydet. Bu sayfada başka işlem yok.</p>`,{'Set-Cookie':'__Host-mfl=; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'});
           }catch(e){
-            const allowed=['authorization_declined','authorization_failed','refresh_permission_missing','shared_folder_denied'];const reason=e instanceof Error&&allowed.includes(e.message)?e.message:'authorization_failed';
+            /** @type {Record<string,string>} */
+            const messages={
+              authorization_declined:'Google girişi iptal edildi. Yeni QR ile tekrar deneyebilirsin.',
+              oauth_client_configuration:'Giriş servisinin Google ayarları kontrol edilmeli. Hesabını silme; uygulamayı sağlayan kişiye bu hatayı bildir.',
+              authorization_code_rejected:'Google giriş kodu kullanılamadı. Miyoo’da yeni QR oluşturup tekrar dene.',
+              google_temporarily_unavailable:'Google’a şu an ulaşılamıyor. Biraz sonra yeni QR ile tekrar dene.',
+              readonly_permission_missing:'Google Drive okuma izni verilmedi. Yeni QR ile giriş yaparken Drive dosyalarını görüntüleme ve indirme kutusunu işaretle.',
+              refresh_permission_missing:'Google kalıcı bağlantı izni vermedi. Yeni QR ile giriş iznini tekrar onayla.',
+              shared_folder_denied:'Bu Google hesabı ortak klasöre erişemiyor. Davet edilen hesabı seç.',
+              authorization_failed:'Google girişi tamamlanamadı. Yeni QR ile tekrar deneyebilirsin.'
+            };
+            const reason=e instanceof Error&&Object.hasOwn(messages,e.message)?e.message:'authorization_failed';
             await env.DB.prepare("UPDATE pairings SET status='error',error_code=?,oauth_cipher=NULL,token_cipher=NULL WHERE id=? AND status='processing'").bind(reason,p.id).run();
-            return html('Bağlantı kurulamadı','<p>Google onayını ve ortak klasör davetini kontrol et. Önceki Miyoo hesabın değiştirilmedi. Yeni bir QR ile tekrar deneyebilirsin.</p>',{},403);
+            return html('Bağlantı kurulamadı',`<p>${messages[reason]}</p><p>Önceki Miyoo hesabın değiştirilmedi.</p><small>Hata: ${reason}</small>`,{},403);
           }
         }
         if(path==='/v1/token'&&request.method==='POST'){
@@ -195,7 +209,7 @@ export function createHandler(options={}) {
           if(!grant||grant.revoked)return json({error:'invalid_grant'},400);
           const reserved=await env.DB.prepare('UPDATE grants SET last_refresh=? WHERE digest=? AND revoked=0 AND last_refresh<=?').bind(now,hash,now-5).run();
           if(!reserved.meta.changes)return json({error:'temporarily_unavailable'},429,{'Retry-After':'5'});
-          const g=await google(env,new URL(TOKEN_URL),new URLSearchParams({grant_type:'refresh_token',refresh_token:rt,client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET}));
+          const g=await google(env,new URL(TOKEN_URL),new URLSearchParams({grant_type:'refresh_token',refresh_token:rt,client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET.trim()}));
           if(!g.ok){
             const kind=object(g.data)&&g.data.error==='invalid_grant'?'invalid_grant':'temporarily_unavailable';
             if(kind==='invalid_grant')await env.DB.prepare('UPDATE grants SET revoked=1 WHERE digest=?').bind(hash).run();

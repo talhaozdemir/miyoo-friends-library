@@ -21,7 +21,7 @@ def request(path, body=None):
     encoded = None if body is None else json.dumps(body).encode()
     req = urllib.request.Request(origin + path, data=encoded,
                                  headers={"Content-Type": "application/json",
-                                          "User-Agent": "MiyooFriendsLibrary/0.3.0"})
+                                          "User-Agent": "MiyooFriendsLibrary/0.3.1"})
     try:
         response = urllib.request.urlopen(req, timeout=25)
     except urllib.error.HTTPError as error:

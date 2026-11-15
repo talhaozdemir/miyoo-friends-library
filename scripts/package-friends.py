@@ -72,7 +72,7 @@ dest.with_suffix(".zip.sha256").write_text(f"{digest}  {dest.name}\n", encoding=
 print(f"Friends bundle ready: {dest.name}, {dest.stat().st_size} bytes; public Desktop/HTTPS definitions only, no account tokens or Web client secret.")
 
 # Small private friends update: same public app definition, never account tokens.
-update = ROOT / "dist/Miyoo-Friends-Library-v0.3.0-phone-update.zip"
+update = ROOT / "dist/Miyoo-Friends-Library-v0.3.1-update.zip"
 with zipfile.ZipFile(update, "w", compression=zipfile.ZIP_DEFLATED) as archive:
     add(archive, ROOT / "build/friends-library-arm", "App/FriendsLibrary/friends-library", True)
     add(archive, profile_path, "App/FriendsLibrary/config/phone-setup.json")

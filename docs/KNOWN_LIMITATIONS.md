@@ -1,5 +1,9 @@
 # Bilinen sınırlar — V1
 
+- 0.3.1 normal menüleri sadeleştirir; SSH ekranları ve ayrı kurulum sihirbazı
+  kaldırıldı. Bilgisayar yardımcıları korunur. Aşağıdaki eski sürüm notlarındaki
+  Advanced SSH ekranları yalnız 0.2/0.3 geçmişine aittir.
+
 - 0.3.0 HTTPS giriş kaynak/host testleri vardır; gerçek Web OAuth kurulumu,
   iPhone Safari ve Miyoo uçtan uca kabulü ayrıca gerekir. Genel pakette servis
   profili yoktur. Dağıtıcının Google Web client/Worker secrets ayarları ve hazır

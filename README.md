@@ -1,11 +1,15 @@
 # Miyoo Friends Library
 
-0.3.0: İsteğe bağlı **SELECT → Account → Connect with phone** artık HTTPS QR
+0.3.1: Sade hesap menüsü: **Connect with phone / Help / Disconnect account**.
+SSH ve ayrı kurulum ekranları kaldırıldı; Connect doğrudan QR açar. Günlük
+ekranlar kısaltıldı, uzun açıklamalar yalnız Help içinde. Mevcut hesaplar korunur.
+
+İsteğe bağlı **SELECT → Account → Connect with phone** artık HTTPS QR
 ile Safari/Chrome girişini destekler. Telefona ek uygulama veya SSH gerekmez.
 QR'daki altı haneli kodu karşılaştır, Google'da davetli hesabınla salt okunur
 erişimi onayla, sonra Miyoo'da **A: Save connection** ile kaydet. İlk Google
 kurulumu ve yeniden bağlantı aynı akışı kullanır. Uygulama içindeki dört sayfalık
-**Phone setup guide** çevrimdışı okunabilir. [Telefon rehberi](docs/HTTPS_SETUP.html).
+**Help** çevrimdışı okunabilir. [Telefon rehberi](docs/HTTPS_SETUP.html).
 
 HTTPS yöntemi için pakette dağıtıcı tarafından yapılandırılmış
 `config/https-setup.json` ve çalışan Cloudflare Worker gerekir. Genel kaynak ve
@@ -17,7 +21,7 @@ yalnız token özeti/grant durumudur. Cihaz kendi tokenını SD'de saklar; Web i
 sırrı cihazda veya dağıtım paketinde bulunmaz.
 
 Bilgisayardan doğrudan Google/rclone kurulumu ve otomatik yenilemesi korunur.
-Eski tünel yöntemi **Advanced SSH login / guide** altında kalır. HTTPS bağlantısı
+SSH tüneli normal uygulama menüsünde yer almaz. HTTPS bağlantısı
 servisin erişilebilirliğine bağlıdır; servis için Workers/D1 Free kotaları
 kullanılır, ücretli yükseltme yapılmaz. İptal/hata eski hesabı korur; yalnız
 başarıyla kaydedilen yeni giriş hesabı değiştirir. Fiziksel iPhone/Android +

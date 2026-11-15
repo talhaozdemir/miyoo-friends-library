@@ -1,6 +1,6 @@
 # İlk Google yetkilendirmesi
 
-0.3.0'da **Setup options / SELECT → Account → Connect with phone** HTTPS QR ile
+0.3.1'de ilk açılışta **A: Connect**, sonra **SELECT → Account → Connect with phone** HTTPS QR ile
 Safari/Chrome'dan ilk giriş ve yeniden bağlantı sunar. Ek telefon uygulaması
 gerekmez. Kod karşılaştırma ve Miyoo'da A onayı gerekir. [Telefon rehberi](HTTPS_SETUP.html).
 Dağıtıcının ayrı Google **Web** OAuth istemcisi ve çalışan ücretsiz Worker'ı
@@ -12,7 +12,7 @@ gereklidir; kısa süreli şifreli token oturumu ve kalıcı hash/grant kaydı s
 Drive listeleme/ROM transferi cihazdan doğrudan Google'a gider.
 
 Bilgisayardan aşağıdaki doğrudan Google kurulumu aynen kullanılabilir. Eski telefon
-tüneli **Advanced SSH login** altında korunur: [ileri SSH rehberi](PHONE_SETUP.html).
+tünelinin teknik referansı normal menü dışında tutulur: [ileri SSH rehberi](PHONE_SETUP.html).
 
 Bu işlem bilgisayarda veya telefon yöntemiyle yapılır. Normal kullanımda bilgisayar
 ve telefon gerekmez; HTTPS yönteminde token yenileme servisi çalışmalıdır.

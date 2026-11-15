@@ -10,7 +10,7 @@
 #define FL_NAME 512
 #define FL_ID 160
 #define FL_MAX_LIST 5000
-#define FL_VERSION "0.3.0"
+#define FL_VERSION "0.3.1"
 
 typedef enum {
     FL_OK = 0, FL_ERR_CONFIG, FL_ERR_AUTH_REQUIRED, FL_ERR_AUTH_EXPIRED,

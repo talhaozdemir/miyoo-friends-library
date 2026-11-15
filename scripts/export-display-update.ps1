@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$zipPath = Join-Path $projectRoot 'dist/Miyoo-Friends-Library-v0.3.0-app-update.zip'
+$zipPath = Join-Path $projectRoot 'dist/Miyoo-Friends-Library-v0.3.1-app-update.zip'
 $stream = [IO.File]::Open($zipPath,[IO.FileMode]::Create)
 $archive = [IO.Compression.ZipArchive]::new($stream,[IO.Compression.ZipArchiveMode]::Create)
 try {
