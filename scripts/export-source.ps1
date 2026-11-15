@@ -29,6 +29,21 @@ try {
         $entry.ExternalAttributes = $(if ($relative -match '\.(sh|command)$') { [int]0x81ED -shl 16 } else { [int]0x81A4 -shl 16 })
     }
 } finally { $archive.Dispose(); $stream.Dispose() }
+# .NET on Windows marks ZIP entries as DOS even with Unix mode bits. Set the
+# central directory's creator OS to Unix so Linux unzip honors executable scripts.
+# This source archive is deliberately small (no ZIP64 or archive comment).
+$bytes = [IO.File]::ReadAllBytes($zipPath)
+$end = $bytes.Length - 22
+if ($end -lt 0 -or [BitConverter]::ToUInt32($bytes,$end) -ne 0x06054b50) { throw 'Unexpected source ZIP trailer.' }
+$count = [BitConverter]::ToUInt16($bytes,$end+10)
+$offset = [int][BitConverter]::ToUInt32($bytes,$end+16)
+for ($i=0; $i -lt $count; $i++) {
+    if ($offset -lt 0 -or $offset+46 -gt $end -or [BitConverter]::ToUInt32($bytes,$offset) -ne 0x02014b50) { throw 'Invalid source ZIP directory.' }
+    $bytes[$offset+5] = 3
+    $offset += 46 + [BitConverter]::ToUInt16($bytes,$offset+28) + [BitConverter]::ToUInt16($bytes,$offset+30) + [BitConverter]::ToUInt16($bytes,$offset+32)
+}
+if ($offset -ne $end) { throw 'Unexpected source ZIP directory size.' }
+[IO.File]::WriteAllBytes($zipPath,$bytes)
 $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
 Set-Content -LiteralPath "$zipPath.sha256" -Encoding utf8 -Value "$hash  $([IO.Path]::GetFileName($zipPath))"
 Write-Output "Created source archive: $zipPath"
