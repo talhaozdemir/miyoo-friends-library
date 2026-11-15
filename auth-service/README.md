@@ -82,6 +82,13 @@ Periodic operator review of grant counts is appropriate for this small group.
 ## Verification
 
 `npm test` uses a local SQLite D1 adapter and entirely mocked Google responses.
+It also runs the default deployed handler inside workerd/Miniflare with local
+D1 and an intercepted outbound transport, covering exchange, folder lookup,
+claim, renewal and refusal to follow redirects. No external network is used.
+This runtime test catches Workers API differences that Node mocks cannot:
+Workers rejects `redirect: 'error'` before sending a request. Both Google
+calls use `manual` and reject non-success redirects without forwarding secrets
+or bearer tokens. See [Workers redirect modes](https://developers.cloudflare.com/workers/runtime-apis/request/).
 It covers first authorization, PKCE/state/cookie binding, cancellation, expiry,
 claim replay/idempotence, encryption, readonly permissions, folder access,
 refresh, invalid grants, rate limits and transient network errors. It does not

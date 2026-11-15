@@ -97,13 +97,17 @@ export function createHandler(options={}) {
   const call=options.fetchImpl||fetch,clock=options.clock||(()=>Date.now());
   /** @param {Env} env @param {URL} url @param {URLSearchParams} body */
   async function google(env,url,body) {
-    const response=await call(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,redirect:'error',signal:AbortSignal.timeout(12000)});
+    // workerd supports manual/follow, not Fetch's redirect:'error'. Never follow
+    // upstream redirects: the request carries the private Web client secret.
+    const response=await call(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,redirect:'manual',signal:AbortSignal.timeout(12000)});
+    if(response.status>=300&&response.status<400){await response.body?.cancel();throw new Error('upstream_redirect');}
     const data=JSON.parse(await bounded(response));return {ok:response.ok,status:response.status,data};
   }
   /** @param {Env} env @param {string} access */
   async function folder(env,access) {
     const u=new URL(`https://www.googleapis.com/drive/v3/files/${env.ROOT_FOLDER_ID}`);u.searchParams.set('fields','id,mimeType');u.searchParams.set('supportsAllDrives','true');
-    const response=await call(u,{headers:{Authorization:`Bearer ${access}`},redirect:'error',signal:AbortSignal.timeout(12000)});
+    const response=await call(u,{headers:{Authorization:`Bearer ${access}`},redirect:'manual',signal:AbortSignal.timeout(12000)});
+    if(!response.ok){await response.body?.cancel();return false;}
     const v=JSON.parse(await bounded(response));return response.ok&&object(v)&&v.id===env.ROOT_FOLDER_ID&&v.mimeType==='application/vnd.google-apps.folder';
   }
   return {
