@@ -25,7 +25,8 @@ $archive = [IO.Compression.ZipArchive]::new($stream,[IO.Compression.ZipArchiveMo
 try {
     foreach ($relative in ($relativePaths | Sort-Object -Unique)) {
         if ($relative -match '(?i)(\.conf$|(^|/)settings\.json$|\.part$)') { throw "Forbidden source path: $relative" }
-        [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,(Join-Path $projectRoot $relative),$relative,[IO.Compression.CompressionLevel]::Optimal) | Out-Null
+        $entry = [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,(Join-Path $projectRoot $relative),$relative,[IO.Compression.CompressionLevel]::Optimal)
+        $entry.ExternalAttributes = $(if ($relative -match '\.(sh|command)$') { [int]0x81ED -shl 16 } else { [int]0x81A4 -shl 16 })
     }
 } finally { $archive.Dispose(); $stream.Dispose() }
 $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
