@@ -45,6 +45,7 @@ try:
     assert status == 200 and pair["display_code"].encode() in raw
     assert "Secure" in headers["Set-Cookie"] and "HttpOnly" in headers["Set-Cookie"]
     assert "no-store" in headers["Cache-Control"]
+    assert "form-action 'self' https://accounts.google.com;" in headers["Content-Security-Policy"]
     wrong = {**payload, "device_secret": secrets.token_urlsafe(32)}
     assert request("/v1/pair/status", wrong)[0] == 404
     assert request("/v1/pair/claim", payload)[0] == 409

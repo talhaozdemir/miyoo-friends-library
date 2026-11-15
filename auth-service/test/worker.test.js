@@ -45,7 +45,10 @@ function fixture(mode='ok'){
   const device=(p)=>({pairing_id:p.pairing_id,device_secret:secret});
   async function authorize(p){
     const get=await request('/pair/'+p.pairing_id),html=await get.text(),cookie=get.headers.get('Set-Cookie').split(';')[0];
-    assert.ok(html.includes(p.display_code));const nonce=html.match(/name="nonce" value="([^"]+)"/)[1];
+    assert.ok(html.includes(p.display_code));
+    // Chrome also checks form-action against the OAuth redirect target.
+    assert.ok(get.headers.get('Content-Security-Policy').includes("form-action 'self' https://accounts.google.com;"));
+    const nonce=html.match(/name="nonce" value="([^"]+)"/)[1];
     const response=await worker.fetch(new Request(env.PUBLIC_ORIGIN+'/pair/'+p.pairing_id+'/authorize',{method:'POST',headers:{Origin:env.PUBLIC_ORIGIN,Cookie:cookie,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({nonce})}),env);
     assert.equal(response.status,303);const target=new URL(response.headers.get('Location'));
     assert.equal(target.origin,'https://accounts.google.com');assert.equal(target.searchParams.get('code_challenge_method'),'S256');assert.equal(target.searchParams.get('access_type'),'offline');assert.equal(target.searchParams.get('prompt'),'consent');

@@ -55,7 +55,7 @@ function code(v) { return typeof v==='string'&&/^[A-Za-z0-9_-]{43}$/.test(v); }
 function tokens(v) { return object(v)&&typeof v.access_token==='string'&&/^[A-Za-z0-9._~+/=-]{1,8192}$/.test(v.access_token)&&typeof v.refresh_token==='string'&&v.refresh_token.length>0&&v.refresh_token.length<=4096&&v.token_type==='Bearer'&&typeof v.expires_in==='number'&&v.expires_in>0&&v.expires_in<=86400&&typeof v.issued_at==='number'; }
 /** @param {unknown} data @param {number} [status] @param {Record<string,string>} [extra] */
 function json(data,status=200,extra={}) { return new Response(JSON.stringify(data),{status,headers:{...security(),'Content-Type':'application/json; charset=utf-8',...extra}}); }
-function security() { return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",'Strict-Transport-Security':'max-age=31536000'}; }
+function security() { return {'Cache-Control':'no-store, max-age=0','Pragma':'no-cache','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'none'",'Strict-Transport-Security':'max-age=31536000'}; }
 /** @param {string} text */
 function escape(text) { return text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 /** @param {string} title @param {string} content @param {Record<string,string>} [extra] @param {number} [status] */

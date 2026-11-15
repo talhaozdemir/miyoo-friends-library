@@ -29,7 +29,7 @@ dizinine indirir. Oyun başlatma, emülasyon, GameSwitcher, kayıtlar ve favoril
 Onion'ın sorumluluğundadır. Yalnız yasal olarak paylaşmaya yetkili olduğunuz
 oyunları kullanın; pakette ROM veya BIOS yoktur.
 
-Sürüm **0.1.4 (otomatik erişim yenileme toparlanması)**. Genel HTTP 401 reddinde
+Korunan **0.1.4 otomatik erişim yenileme toparlanması**: genel HTTP 401 reddinde
 mevcut refresh izni korunup yalnız kısa ömürlü erişim tokenı süresi geçmiş
 işaretlenir ve işlem bir kez tekrar denenir. Gerçek `invalid_grant`, istemci
 ayarı ve SD yazma hataları ayrılır. [Davranış ve kanıt](docs/AUTH_RECOVERY_0.1.4.md).
