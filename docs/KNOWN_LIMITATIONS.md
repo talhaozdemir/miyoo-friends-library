@@ -1,11 +1,11 @@
 # Bilinen sınırlar — V1
 
-- 0.3.1 normal menüleri sadeleştirir; SSH ekranları ve ayrı kurulum sihirbazı
-  kaldırıldı. Bilgisayar yardımcıları korunur. Aşağıdaki eski sürüm notlarındaki
-  Advanced SSH ekranları yalnız 0.2/0.3 geçmişine aittir.
+- 0.3.2 eski SSH OAuth akışını kaldırır; giriş yalnız HTTPS QR veya bilgisayar
+  kurulumu ile yapılır. QR ortak hesap kaydetme/iptal/toparlanma korumaları korunur.
+  Yeni sürümün fiziksel cihaz testi henüz yapılmadı.
 
-- 0.3.0 HTTPS giriş kaynak/host testleri vardır; gerçek Web OAuth kurulumu,
-  iPhone Safari ve Miyoo uçtan uca kabulü ayrıca gerekir. Genel pakette servis
+- HTTPS girişin kaynak/host testleri ve kullanıcıdan başarılı QR giriş bildirimi
+  vardır. 0.3.2 temizliğinin fiziksel cihaz kabulü ayrıca gerekir. Genel pakette servis
   profili yoktur. Dağıtıcının Google Web client/Worker secrets ayarları ve hazır
   `https-setup.json` olmadan bu seçenek açıklayıcı hata verir.
 - HTTPS ile bağlanan hesapların otomatik yenilemesi ücretsiz servisin açık

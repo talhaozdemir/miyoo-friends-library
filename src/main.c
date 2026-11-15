@@ -4,7 +4,7 @@
 #include "fl_backend.h"
 #include "fl_download.h"
 #include "fl_ui.h"
-#include "fl_phone.h"
+#include "fl_account.h"
 #include "fl_https.h"
 #include <arpa/inet.h>
 #include <dirent.h>
@@ -258,7 +258,7 @@ static void pump_https(App *a){
         if(ready!=a->https.ready)a->dirty=true;
         if(strcmp(a->qr_url,a->https.url)){
             snprintf(a->qr_url,sizeof(a->qr_url),"%s",a->https.url);
-            if(*a->qr_url&&fl_phone_qr(a->qr_url,a->phone_qr)){fl_https_cancel(&a->https);a->qr_url[0]=0;}
+            if(*a->qr_url&&fl_https_qr(a->qr_url,a->phone_qr)){fl_https_cancel(&a->https);a->qr_url[0]=0;}
             a->dirty=true;
         }
         return;
@@ -337,7 +337,7 @@ static void draw(App *a) {
         unsigned page=a->guide_page;if(page>3)page=3;
         const char *guide[8];for(unsigned i=0;i<8;i++)guide[i]=https_guide[page][i];
         v.subtitle="HELP";v.details=guide;v.detail_count=page==3?4:7;
-        if(page==3&&fl_phone_qr("https://talhaozdemir.github.io/miyoo-friends-library/HTTPS_SETUP.html",a->guide_qr)==0)v.qr=a->guide_qr;
+        if(page==3&&fl_https_qr("https://talhaozdemir.github.io/miyoo-friends-library/HTTPS_SETUP.html",a->guide_qr)==0)v.qr=a->guide_qr;
         snprintf(lines[8],sizeof(lines[8]),"%u / 4",page+1);v.status=lines[8];
         v.footer="LEFT/RIGHT: PAGE   B: BACK";
         if(fl_ui_draw(a->ui,&v,&a->error))a->quit=true;
@@ -448,7 +448,7 @@ int main(int argc,char **argv) {
         if(snprintf(lockpath,sizeof(lockpath),"%s/app.lock",app.config.data_dir)>=(int)sizeof(lockpath)){fprintf(stderr,"App data path is too long.\n");fl_systems_free(&app.systems);return 1;}
         lock=open(lockpath,O_CREAT|O_RDWR|O_NOFOLLOW,0600);
         if(lock<0||flock(lock,LOCK_EX|LOCK_NB)){fprintf(stderr,"Friends Library is already running or app data is not writable.\n");if(lock>=0)close(lock);fl_systems_free(&app.systems);return 1;}fcntl(lock,F_SETFD,FD_CLOEXEC);
-        fl_phone_recover(&app.config);
+        fl_account_recover(&app.config);
         if(fl_download_recover(&app.config,&app.systems,&app.error))snprintf(app.notice,sizeof(app.notice),"%s",app.error.message);
     }
     struct sigaction action;memset(&action,0,sizeof(action));action.sa_handler=request_shutdown;sigemptyset(&action.sa_mask);sigaction(SIGTERM,&action,NULL);sigaction(SIGINT,&action,NULL);signal(SIGPIPE,SIG_IGN);

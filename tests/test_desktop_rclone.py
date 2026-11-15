@@ -65,7 +65,7 @@ def main():
     env.update(HTTP_PROXY=base, HTTPS_PROXY=base, ALL_PROXY=base, NO_PROXY="")
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     try:
-        with tempfile.TemporaryDirectory(prefix="fl-phone-oauth-") as folder:
+        with tempfile.TemporaryDirectory(prefix="fl-desktop-oauth-") as folder:
             path = Path(folder) / "rclone.conf"
             path.write_text("[friends]\ntype=drive\nscope=drive.readonly\n"
                             "client_id=mock.apps.googleusercontent.com\nclient_secret=mock-public-secret\n"
@@ -121,10 +121,10 @@ def main():
                 # An actual authenticated Files.get-style request verifies the
                 # folder, not a synthetic lsjson root entry with no root ID.
                 verify = Path(folder) / "verify.conf"
-                verify.write_text("[fl_phone_verify]\ntype=http\nno_head=true\nno_escape=true\n"
+                verify.write_text("[fl_desktop_verify]\ntype=http\nno_head=true\nno_escape=true\n"
                                   "headers=Authorization,Bearer test-only-access\n"
                                   f"url={base}/\n", encoding="utf-8")
-                result = subprocess.run([str(binary), "cat", "fl_phone_verify:metadata?fields=id,mimeType", "--config", str(verify),
+                result = subprocess.run([str(binary), "cat", "fl_desktop_verify:metadata?fields=id,mimeType", "--config", str(verify),
                                          "--retries", "1", "--low-level-retries", "1", "--log-level", "ERROR"],
                                         env=env, capture_output=True, timeout=10)
                 assert result.returncode == 0, "Authenticated metadata request failed"

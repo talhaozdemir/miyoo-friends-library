@@ -1,4 +1,5 @@
 #include "fl_https.h"
+#include "qrcodegen.h"
 #include "cJSON.h"
 #include <ctype.h>
 #include <fcntl.h>
@@ -7,6 +8,11 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+int fl_https_qr(const char *text,uint8_t qr[FL_QR_BYTES]){
+    uint8_t temp[FL_QR_BYTES];
+    return text&&qrcodegen_encodeText(text,temp,qr,qrcodegen_Ecc_MEDIUM,1,10,qrcodegen_Mask_AUTO,true)?0:-1;
+}
 
 enum { HTTPS_CREATE=1,HTTPS_WAIT,HTTPS_STATUS,HTTPS_READY,HTTPS_CLAIM,HTTPS_ACK,HTTPS_CANCEL };
 static double https_clock(void){struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);return t.tv_sec+t.tv_nsec/1e9;}
@@ -69,14 +75,14 @@ static int http_start(FlHttps *h,const char *operation,unsigned phase,FlError *e
     h->phase=phase;return 0;
 fail:cJSON_Delete(body);fl_error(error,FL_ERR_CONFIG,"Cannot prepare the secure phone request.");return -1;
 }
-void fl_https_destroy(FlHttps *h){if(!h)return;fl_process_destroy(&h->worker);fl_phone_destroy(&h->account);memset(h,0,sizeof(*h));}
+void fl_https_destroy(FlHttps *h){if(!h)return;fl_process_destroy(&h->worker);fl_account_destroy(&h->account);memset(h,0,sizeof(*h));}
 static int https_finish(FlHttps *h,FlCode code,const char *text,FlError *error){
-    fl_process_destroy(&h->worker);fl_phone_destroy(&h->account);h->url[0]=0;memset(h->secret,0,sizeof(h->secret));h->active=false;h->done=true;h->ready=false;fl_error(&h->result,code,text);if(error)*error=h->result;return code==FL_OK?1:-1;
+    fl_process_destroy(&h->worker);fl_account_destroy(&h->account);h->url[0]=0;memset(h->secret,0,sizeof(h->secret));h->active=false;h->done=true;h->ready=false;fl_error(&h->result,code,text);if(error)*error=h->result;return code==FL_OK?1:-1;
 }
 int fl_https_start(FlHttps *h,const FlConfig *c,FlError *error){
     if(h->active){fl_error(error,FL_ERR_BUSY,"Phone login is already running.");return -1;}
     fl_https_destroy(h);if(fl_https_profile(c,&h->profile,error))return -1;
-    FlPhoneProfile pub={0};strcpy(pub.client_id,h->profile.client_id);strcpy(pub.root_id,h->profile.root_id);
+    FlAccountProfile pub={0};strcpy(pub.client_id,h->profile.client_id);strcpy(pub.root_id,h->profile.root_id);
     if(fl_account_stage(&h->account,c,&pub,error))return -1;
     if(https_path(h->curl,c->sd_root,".tmp_update/bin/curl")||access(h->curl,X_OK)){
         fl_error(error,FL_ERR_CONFIG,"OnionOS HTTPS client is unavailable. Use OnionOS 4.3 or computer setup.");goto fail;}

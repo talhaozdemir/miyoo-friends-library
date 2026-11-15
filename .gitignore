@@ -16,3 +16,6 @@ setup-info.json
 friends-share-profile.json
 *.pem
 *.key
+
+__pycache__/
+*.pyc

@@ -1,9 +1,9 @@
 #ifndef FL_HTTPS_H
 #define FL_HTTPS_H
-#include "fl_phone.h"
+#include "fl_account.h"
 typedef struct { char origin[256],client_id[256],root_id[FL_ID]; } FlHttpsProfile;
 typedef struct {
-    FlPhone account;
+    FlAccount account;
     FlProcess worker;
     FlHttpsProfile profile;
     char curl[FL_PATH],request_path[FL_PATH],body_path[FL_PATH];
@@ -20,4 +20,6 @@ int fl_https_poll(FlHttps *https,FlError *error);
 int fl_https_confirm(FlHttps *https,FlError *error);
 void fl_https_cancel(FlHttps *https);
 void fl_https_destroy(FlHttps *https);
+#define FL_QR_BYTES 512
+int fl_https_qr(const char *text,uint8_t qr[FL_QR_BYTES]);
 #endif

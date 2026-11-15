@@ -1,6 +1,6 @@
 # Gerçek cihaz kabul listesi
 
-0.3.1 sade arayüz (host render/controller geçti; fiziksel cihaz kabulü bekleniyor):
+0.3.2 sade arayüz (host render/controller geçti; fiziksel cihaz kabulü bekleniyor):
 
 - [ ] Account yalnız Connect with phone / Help / Disconnect account gösterir.
 - [ ] İlk açılış A: Connect ve hesap menüsündeki Connect doğrudan QR açar.
@@ -22,7 +22,7 @@
 - [ ] Servis geçici 429/503 verdiğinde Google izni iptal edilmiş gibi davranılmaz.
 - [ ] Web client secret SD kartta yoktur; kişisel token ve QR loglarda yoktur.
 - [ ] Dört sayfalık çevrimdışı rehber, rehber QR'si ve önceki ekrana dönüş okunabilir.
-- [ ] Bilgisayar kurulumu ve Advanced SSH seçenekleri çalışır.
+- [ ] QR ve bilgisayar kurulumları çalışır; eski SSH giriş yolu bulunmaz.
 - [ ] Uygulamadan çıkınca curl/rclone alt süreci veya LAN login server kalmaz.
 
 Durum: **Kullanıcı 0.1.1'de çizimin çalıştığını ama ters olduğunu doğruladı. 0.1.2 yön ve ikon güncellemesinin cihaz testi bekleniyor.**
@@ -65,23 +65,13 @@ test kayıtlarına koymayın. Yalnız paylaşım hakkı bulunan küçük test do
 - [ ] Güncelleme kullanıcı config, ROM, BIOS ve Saves dosyalarına dokunmaz.
 - [ ] Kaldırma sonrası indirilen ROM'lar Onion'da kalır.
 
-0.2.0 telefon akışı (bu maddeler henüz gerçek cihazda doğrulanmadı):
+0.3.2 güncelleme ve hesap güvenliği:
 
-- [ ] Yeni SD uygulama kurulumunda hiçbir settings/token yokken arkadaş paketinin
-      public profiliyle telefon girişi başlar; Computer setup alternatifi görünür.
-- [ ] Android ve iPhone'da authenticated SSH LOCAL 53682→127.0.0.1:53682 tüneli
-      normal tarayıcıdaki Google girişi boyunca açık kalır.
-- [ ] Login QR gerçek Miyoo ekranından okunur; rehber QR'si doğru sayfayı açar.
-- [ ] Sekiz rehber sayfası, IP adresi ve geri dönüşü çevrimdışı okunabilir.
-- [ ] Gerçek davetli hesap klasör metadata kontrolünü geçer ve sonraki listeleme/
-      indirme çalışır. Davetsiz hesap, B iptali ve süre aşımı eski hesabı korur.
-- [ ] İlk girişten 2+ saat ve yeniden başlatma sonra otomatik token yenilemesi
-      çalışır; telefon tüneli veya bilgisayar gerekmez.
-- [ ] OAuth dinleyicisi yalnız 127.0.0.1:53682'de ve giriş süresince vardır;
-      app kapanınca rclone/port kalmaz. SSH'yi kullanıcı kapatır.
-- [ ] Giriş sırasında güç kesilmesi sonrası yalnız uygulamanın bilinen staging
-      dosyaları temizlenir; mevcut config ve ROM'lar korunur.
-- [ ] Eski Windows .cmd ve Mac .command kurulumları çalışmayı sürdürür.
+- [ ] Mevcut hesabın üzerine App klasörü birleştirilir; yeniden giriş gerekmez.
+- [ ] Eski uygulama içi PHONE_SETUP.html ve phone-setup.json kaldırılır.
+- [ ] OnionOS SSH servis ayarları ve diğer uygulamalar değişmez.
+- [ ] İptal, süre aşımı, ağ hatası ve güç kesilmesi mevcut hesabı korur.
+- [ ] HTTPS QR + bilgisayarla ilk kurulum ve yeniden bağlantı çalışır.
 
 Başarısızlıkta sürüm, adım ve hassas veri içermeyen hata kodu kaydedilir; aynı
 paket için donanım kabulü verilmez. TLS hatasında önce cihaz saatini doğrulayın.

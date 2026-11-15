@@ -5,10 +5,10 @@ $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $ZipPath).P
 try {
     $names = @($zip.Entries | ForEach-Object { $_.FullName.Replace('\','/') })
     foreach ($name in $names) {
-        if (!$name.StartsWith('App/FriendsLibrary/') -or $name.Contains('../') -or $name.StartsWith('/')) {
+        if ((!$name.StartsWith('App/FriendsLibrary/') -and !$name.StartsWith('FirstSetup/')) -or $name.Contains('../') -or $name.StartsWith('/')) {
             throw "Unexpected archive path: $name"
         }
-        if ($name -match '(?i)(rclone\.conf|/settings\.json|\.part$|/Roms/|/BIOS/|/Saves/)') {
+        if ($name -match '(?i)(rclone\.conf|/settings\.json|\.part$|/Roms/|/BIOS/|/Saves/|/PHONE_SETUP\.html$|/phone-setup\.json$)') {
             throw "Forbidden package path: $name"
         }
     }

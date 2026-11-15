@@ -1,6 +1,10 @@
 # Miyoo Friends Library
 
-0.3.1: Sade hesap menüsü: **Connect with phone / Help / Disconnect account**.
+0.3.2: SSH ile eski giriş yöntemi tamamen kaldırıldı. **QR ve bilgisayarla kurulum** kalır.
+Tek güncel tam kurulum ZIP’i hem kurulum hem güncelleme içindir; paketleme eski
+sürüm ZIP ve checksum dosyalarını yeni paket doğrulandıktan sonra temizler.
+
+Sade hesap menüsü: **Connect with phone / Help / Disconnect account**.
 SSH ve ayrı kurulum ekranları kaldırıldı; Connect doğrudan QR açar. Günlük
 ekranlar kısaltıldı, uzun açıklamalar yalnız Help içinde. Mevcut hesaplar korunur.
 
@@ -21,11 +25,11 @@ yalnız token özeti/grant durumudur. Cihaz kendi tokenını SD'de saklar; Web i
 sırrı cihazda veya dağıtım paketinde bulunmaz.
 
 Bilgisayardan doğrudan Google/rclone kurulumu ve otomatik yenilemesi korunur.
-SSH tüneli normal uygulama menüsünde yer almaz. HTTPS bağlantısı
+HTTPS bağlantısı
 servisin erişilebilirliğine bağlıdır; servis için Workers/D1 Free kotaları
 kullanılır, ücretli yükseltme yapılmaz. İptal/hata eski hesabı korur; yalnız
-başarıyla kaydedilen yeni giriş hesabı değiştirir. Fiziksel iPhone/Android +
-Miyoo üzerinde bu yeni akışın kabul testi henüz yapılmadı.
+başarıyla kaydedilen yeni giriş hesabı değiştirir. Kullanıcı QR girişinin çalıştığını bildirdi; 0.3.2 temizliğinin fiziksel cihaz kabulü
+henüz yapılmadı.
 
 OnionOS 4.3 stable kullanan **Miyoo Mini Plus** için özel Google Drive
 kütüphanesi gezgini. Arkadaş → konsol → oyun seçerek dosyayı doğru `Roms/`
@@ -65,7 +69,7 @@ Windows yardımcısı sahte yanıtlarla test edildi; gerçek Mac OAuth testi bek
 
 Genel paket ve kendi OAuth istemcisini kullanmak isteyenler için:
 
-1. `dist/Miyoo-Friends-Library-v0.1.4-OnionOS-4.3.zip` ve `.sha256` dosyasını alın.
+1. `dist/Miyoo-Friends-Library-Arkadas-Kurulum.zip` ve `.sha256` dosyasını alın.
 2. ZIP'i microSD kartın **köküne** çıkarın. Sonuç `App/FriendsLibrary/` olmalı.
 3. Bilgisayarda [kendi Google hesabınızı yetkilendirin](docs/AUTHENTICATION.md).
 4. Kartı güvenle çıkarıp Miyoo'ya takın. Wi-Fi ve cihaz saati doğru olsun.
@@ -195,3 +199,20 @@ yazılarda `?` görülebilir, gerçek dosya adları değiştirilmez.
 [Gerçek otomatik test ve build sonuçları](docs/VERIFICATION.md).
 
 MIT lisansı; [üçüncü taraf bildirimleri](THIRD_PARTY_NOTICES.md).
+
+## Tek güncel dağıtım paketi
+
+`./scripts/build.ps1 -TestsOnly`, ardından `./scripts/build.ps1` ve
+`./scripts/package.ps1` çalıştırılır. `dist/` içinde yalnız
+`Miyoo-Friends-Library-Arkadas-Kurulum.zip` ve `.zip.sha256` kalır. Paket hem
+ilk kurulum hem güncelleme için tamdır; küçük update/source varyantları üretilmez.
+Mevcut kartta yalnız `App` klasörünü birleştirip dosya değişimlerini onaylayın.
+`.config`, `Roms`, `Saves`, BIOS ve diğer uygulamalar bu pakette yoktur.
+Eski SSH rehberi/public profil dosyaları ilk açılışta yalnız uygulama dizininden
+kaldırılır; OnionOS SSH servis ayarları değiştirilmez.
+
+Public kaynak checkout'unda dağıtıcı profilleri yoksa paketleme generic modda
+çalışır; kişisel Google bilgisi içermez. Arkadaş paketi için build altındaki
+whitelist edilmiş public Desktop ve HTTPS tanımları kullanılır; kişisel token veya
+Web client secret eklenmez. İsteğe bağlı kaynak arşivi `scripts/export-source.ps1`
+ile `build/source/` altında oluşturulur; kaynak kod ayrıca GitHub'dadır.

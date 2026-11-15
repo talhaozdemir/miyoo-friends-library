@@ -1,3 +1,4 @@
+param([switch]$Generic)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $appDir = Join-Path $projectRoot 'package/App/FriendsLibrary'
@@ -35,10 +36,12 @@ foreach ($file in Get-ChildItem -LiteralPath $appDir -Recurse -File) {
 }
 $distDir = Join-Path $projectRoot 'dist'
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
-$zip = Join-Path $distDir 'Miyoo-Friends-Library-v0.3.1-OnionOS-4.3.zip'
-Compress-Archive -LiteralPath "$projectRoot/package/App" -DestinationPath $zip -Force
-$hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
-Set-Content -LiteralPath "$zip.sha256" -Encoding utf8 -Value "$hash  $([IO.Path]::GetFileName($zip))"
+$zip = Join-Path $distDir 'Miyoo-Friends-Library-Arkadas-Kurulum.zip'
+# The same single archive serves both installation and updates. Public source
+# checkouts without distributor profiles produce a generic computer-setup ZIP.
+$packageArgs = @("$PSScriptRoot/package-friends.py")
+if ($Generic -or !(Test-Path -LiteralPath "$projectRoot/build/friends-share-profile.json") -or !(Test-Path -LiteralPath "$projectRoot/build/https-share-profile.json")) { $packageArgs += '--generic' }
+python @packageArgs
+if ($LASTEXITCODE -ne 0) { throw 'Latest package creation failed; previous archive was kept.' }
 & "$PSScriptRoot/test-package.ps1" -ZipPath $zip
 Write-Output "Created: $zip"
-Write-Output "SHA256: $hash"

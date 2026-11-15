@@ -1,6 +1,6 @@
 FRIENDS LIBRARY - FIRST SETUP
 
-OPTIONAL PHONE SETUP (first login or reconnect, v0.3.1)
+OPTIONAL PHONE SETUP (first login or reconnect, v0.3.2)
 After copying App to the SD card, open Friends Library > A: Connect
 or SELECT: Account > Connect with phone. Help contains setup instructions. You can sign in using a phone instead
 of a computer, without taking the card out again. The configured HTTPS QR
@@ -8,7 +8,7 @@ opens in Safari/Chrome; no extra phone app or SSH is needed. Compare the
 six-digit code, approve read-only Google access, then press A on the Miyoo
 to save the connection. Authorization and renewal use the free HTTPS service;
 ROMs still download directly from Google. Read docs/HTTPS_SETUP.html in the
-app folder. Real Android/iOS + Miyoo testing is still pending. SSH settings are not part of the app menu. Computer setup below remains available unchanged.
+app folder. The user has reported successful QR login; the 0.3.2 cleanup still needs device validation. Computer setup below remains available unchanged.
 
 Read the accompanying Turkish PDF guide before starting.
 Extract the entire ZIP on your computer. Copy/merge only App to the SD root.

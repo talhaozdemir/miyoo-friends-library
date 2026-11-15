@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$distDir = Join-Path $projectRoot 'dist'
+$distDir = Join-Path $projectRoot 'build/source'
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
-$zipPath = Join-Path $distDir 'Miyoo-Friends-Library-v0.3.1-source.zip'
+$zipPath = Join-Path $distDir 'Miyoo-Friends-Library-source.zip'
 $relativePaths = @('Makefile','README.md','LICENSE','THIRD_PARTY_NOTICES.md','config.example.json','.gitignore','.gitattributes')
 foreach ($directory in @('src','include','vendor','tests','scripts','docs','assets','distribution','sites')) {
     $relativePaths += Get-ChildItem -LiteralPath (Join-Path $projectRoot $directory) -File -Recurse | ForEach-Object {
@@ -23,7 +23,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $stream = [IO.File]::Open($zipPath,[IO.FileMode]::Create)
 $archive = [IO.Compression.ZipArchive]::new($stream,[IO.Compression.ZipArchiveMode]::Create)
 try {
-    foreach ($relative in ($relativePaths | Sort-Object -Unique)) {
+    foreach ($relative in ($relativePaths | Where-Object { $_ -notmatch "(^|/)__pycache__/|\.pyc$" } | Sort-Object -Unique)) {
         if ($relative -match '(?i)(\.conf$|(^|/)settings\.json$|\.part$)') { throw "Forbidden source path: $relative" }
         $entry = [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,(Join-Path $projectRoot $relative),$relative,[IO.Compression.CompressionLevel]::Optimal)
         $entry.ExternalAttributes = $(if ($relative -match '\.(sh|command)$') { [int]0x81ED -shl 16 } else { [int]0x81A4 -shl 16 })

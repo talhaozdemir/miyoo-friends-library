@@ -127,7 +127,7 @@ int main(int argc,char **argv) {
         a.guide_page=page;draw(&a);CHECK(!a.quit);char shot[128];snprintf(shot,sizeof(shot),"build/ui-https-guide-%u.bmp",page+1);CHECK(!fl_ui_screenshot(a.ui,shot,&error));
         if(page<3)for(unsigned line=0;line<8;line++)CHECK(strlen(https_guide[page][line])<=49);
     }
-    strcpy(a.qr_url,"https://test.workers.dev/pair/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");CHECK(!fl_phone_qr(a.qr_url,a.phone_qr));strcpy(a.https.code,"123456");a.https.ready=true;a.screen=SCREEN_HTTPS;draw(&a);CHECK(!fl_ui_screenshot(a.ui,"build/ui-https-qr.bmp",&error));a.qr_url[0]=0;
+    strcpy(a.qr_url,"https://test.workers.dev/pair/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");CHECK(!fl_https_qr(a.qr_url,a.phone_qr));strcpy(a.https.code,"123456");a.https.ready=true;a.screen=SCREEN_HTTPS;draw(&a);CHECK(!fl_ui_screenshot(a.ui,"build/ui-https-qr.bmp",&error));a.qr_url[0]=0;
     a.demo=true;load_folder(&a,0,a.config.root_id,false);draw(&a);CHECK(!fl_ui_screenshot(a.ui,"build/ui-simple-library.bmp",&error));
     for(unsigned i=0;i<3;++i)frame_free(&a.frames[i]);
     fl_ui_close(a.ui);
