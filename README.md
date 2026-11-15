@@ -1,5 +1,29 @@
 # Miyoo Friends Library
 
+0.2.0: Bilgisayardan kurulum ve otomatik OAuth yenilemesi korunur. İsteğe bağlı
+**SELECT → Connect with phone** ile ilk Google bağlantısı veya yeniden giriş
+kart çıkarılmadan yapılabilir. **Phone setup guide** cihaz içinde sekiz sayfa
+çevrimdışı açıklama ve telefon rehberi QR'si sunar.
+
+Telefon ve Miyoo aynı güvenilir Wi-Fi'da olmalı; telefonda SSH **local port
+forwarding** uygulaması gerekir. QR tek başına tünel kurmaz. Hazır arkadaş
+ZIP'inde ilk telefon girişi için ortak public Desktop uygulama/klasör tanımı
+`App/FriendsLibrary/config/phone-setup.json` içine eklenir; kullanıcı tokenı
+bulunmaz. Genel kaynak/OnionOS paketinde bu özel dağıtım tanımı bulunmaz;
+mevcut bilgisayar bağlantısının public client bilgileri yeniden kullanılabilir.
+
+İlk dosya kopyalamasından sonra telefonla Google yetkilendirmesi bilgisayar
+istemez. Uygulama SSH servisini açmaz veya ayarlarını değiştirmez. Yeni hesap
+ayrı çalışma dizininde yetkilendirilir, Google Files.get ile salt okunur klasör
+erişimi doğrulanır, sonra atomik kaydedilir. İptal ve hata önceki hesabı korur.
+[Ayrıntılı telefon rehberi](docs/PHONE_SETUP.html).
+
+Bu özellik mock/loopback OAuth ve QR ekranı testlerinden geçti; Android/iOS +
+OnionOS üzerinde gerçek uçtan uca doğrulama henüz yapılmadı. Pinned rclone
+1.76.0 Drive yetkilendirmesi kendi OAuth state kontrolünü kullanır; Drive
+backend'inde PKCE etkin değildir. Dinleyici loopback'te tutulur ve yalnız SSH
+tüneli üzerinden kullanılır; bir LAN HTTP giriş servisi açılmaz.
+
 OnionOS 4.3 stable kullanan **Miyoo Mini Plus** için özel Google Drive
 kütüphanesi gezgini. Arkadaş → konsol → oyun seçerek dosyayı doğru `Roms/`
 dizinine indirir. Oyun başlatma, emülasyon, GameSwitcher, kayıtlar ve favoriler

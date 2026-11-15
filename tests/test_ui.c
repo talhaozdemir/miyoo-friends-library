@@ -1,4 +1,5 @@
 #include "fl_ui.h"
+#include "fl_phone.h"
 #include <SDL/SDL.h>
 #include <assert.h>
 #include <stdio.h>
@@ -99,6 +100,10 @@ int main(void)
     assert(fl_ui_screenshot(ui,"build/ui-error.bmp",&error)==0);
     assert(fl_ui_draw(NULL,&view,&error)==-1);
     assert(fl_ui_screenshot(NULL,"build/invalid.bmp",&error)==-1);
+    uint8_t login_qr[FL_QR_BYTES];assert(fl_phone_qr("http://127.0.0.1:53682/auth?state=abcdefghijklmnopqrstuv",login_qr)==0);
+    const char *qr_lines[]={"SCAN AND OPEN","Tunnel must stay on.","Use phone browser.","Invited Google account.","","QR lasts 5 minutes.","Keep this QR private."};
+    view.error=false;view.qr=login_qr;view.details=qr_lines;view.detail_count=7;view.title="FRIENDS LIBRARY";view.subtitle="GOOGLE LOGIN / PHONE";view.status="First time? X: phone setup guide.";view.footer="B: CANCEL LOGIN   X: PHONE GUIDE";
+    assert(fl_ui_draw(ui,&view,&error)==0);assert(fl_ui_screenshot(ui,"build/ui-phone-qr.bmp",&error)==0);view.qr=NULL;
     fl_ui_close(ui);
     static char rotation[]="FL_DISPLAY_ROTATION=180";
     SDL_putenv(rotation);ui=fl_ui_open(&error);assert(ui);

@@ -40,5 +40,23 @@ test kayıtlarına koymayın. Yalnız paylaşım hakkı bulunan küçük test do
 - [ ] Güncelleme kullanıcı config, ROM, BIOS ve Saves dosyalarına dokunmaz.
 - [ ] Kaldırma sonrası indirilen ROM'lar Onion'da kalır.
 
+0.2.0 telefon akışı (bu maddeler henüz gerçek cihazda doğrulanmadı):
+
+- [ ] Yeni SD uygulama kurulumunda hiçbir settings/token yokken arkadaş paketinin
+      public profiliyle telefon girişi başlar; Computer setup alternatifi görünür.
+- [ ] Android ve iPhone'da authenticated SSH LOCAL 53682→127.0.0.1:53682 tüneli
+      normal tarayıcıdaki Google girişi boyunca açık kalır.
+- [ ] Login QR gerçek Miyoo ekranından okunur; rehber QR'si doğru sayfayı açar.
+- [ ] Sekiz rehber sayfası, IP adresi ve geri dönüşü çevrimdışı okunabilir.
+- [ ] Gerçek davetli hesap klasör metadata kontrolünü geçer ve sonraki listeleme/
+      indirme çalışır. Davetsiz hesap, B iptali ve süre aşımı eski hesabı korur.
+- [ ] İlk girişten 2+ saat ve yeniden başlatma sonra otomatik token yenilemesi
+      çalışır; telefon tüneli veya bilgisayar gerekmez.
+- [ ] OAuth dinleyicisi yalnız 127.0.0.1:53682'de ve giriş süresince vardır;
+      app kapanınca rclone/port kalmaz. SSH'yi kullanıcı kapatır.
+- [ ] Giriş sırasında güç kesilmesi sonrası yalnız uygulamanın bilinen staging
+      dosyaları temizlenir; mevcut config ve ROM'lar korunur.
+- [ ] Eski Windows .cmd ve Mac .command kurulumları çalışmayı sürdürür.
+
 Başarısızlıkta sürüm, adım ve hassas veri içermeyen hata kodu kaydedilir; aynı
 paket için donanım kabulü verilmez. TLS hatasında önce cihaz saatini doğrulayın.

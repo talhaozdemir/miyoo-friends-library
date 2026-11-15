@@ -1,4 +1,5 @@
 #include "fl_ui.h"
+#include "qrcodegen.h"
 
 #include <SDL/SDL.h>
 #include <stdlib.h>
@@ -261,7 +262,16 @@ int fl_ui_draw(FlUi *ui, const FlView *view, FlError *error)
     text(ui,36,22,584,view->title,3,ui->text);
     text(ui,22,64,596,view->subtitle,2,ui->muted);
 
-    if (view->details && view->detail_count) {
+    if(view->qr){
+        int size=qrcodegen_getSize(view->qr),scale=264/(size+8);
+        if(size<21||size>57||scale<1){fl_error(error,FL_ERR_FORMAT,"Cannot display the login QR.");return -1;}
+        int width=(size+8)*scale,x=24+(264-width)/2,y=110+(276-width)/2;
+        Uint32 white=SDL_MapRGB(ui->screen->format,255,255,255),black=SDL_MapRGB(ui->screen->format,0,0,0);
+        rect(ui,x,y,width,width,white);
+        for(int row=0;row<size;row++)for(int col=0;col<size;col++)
+            if(qrcodegen_getModule(view->qr,col,row))rect(ui,x+(col+4)*scale,y+(row+4)*scale,scale,scale,black);
+        if(view->details)for(size_t i=0;i<view->detail_count&&i<9;i++)text(ui,308,115+(int)i*30,306,view->details[i],2,i?ui->text:ui->accent);
+    } else if (view->details && view->detail_count) {
         size_t lines=view->detail_count;
         if (lines>9) lines=9;
         for (size_t i=0; i<lines; i++)

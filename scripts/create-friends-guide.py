@@ -44,14 +44,14 @@ def note(title, text):
     story.extend([box, Spacer(1, 12)])
 
 heading(1, "Miyoo Friends Library", "Arkadaşların paylaştığı özel Google Drive oyun kütüphanesini Miyoo Mini Plus üzerinden gez ve oyunları indir.")
-note("İlk kurulum bilgisayarda, kullanım Miyoo'da", "Bu ZIP ve rehber yeterli. Kendi Google hesabınla bir kez bağlanırsın. Uygulama ve ortak klasör tanımı hazırdır; OAuth istemcisi oluşturman gerekmez.")
+note("Google girişi bilgisayardan veya telefondan", "Bu ZIP ortak uygulama ve klasör tanımını içerir; her arkadaş kendi Google hesabıyla bağlanır. Mevcut Windows/Mac yöntemi korunur. Kartı çıkarmadan telefonla ilk giriş veya yeniden bağlantı için sayfa 7-8'i kullan. Telefonda SSH tüneli uygulaması gerekir.")
 p("Başlamadan önce", "sub")
-p("Miyoo Mini Plus + OnionOS 4.3, microSD kart okuyucu, internet ve Windows 10/11 (64 bit) veya macOS 12 ve üzeri gerekir. Mac'te Intel ve Apple Silicon desteklenir.")
+p("Miyoo Mini Plus + OnionOS 4.3 ve internet gerekir. App klasörünü SD karta ilk kez kopyalamak için kart okuyucu kullanabilirsin. Google girişini Windows 10/11 (64 bit), macOS 12+ veya gerekli tünel uygulamasıyla telefondan yapabilirsin.")
 p("Google hesabın <b>ortak Drive klasörüne davetli</b> olmalı. Uygulama artık Production durumunda; test kullanıcıları listesine eklenmen gerekmez. Klasör iznin eksikse paketi gönderen kişiye haber ver.")
 step(1, "ZIP'i bilgisayara çıkar", "Miyoo-Friends-Library-Arkadas-Kurulum.zip dosyasını tamamen aç. İçinden App ve FirstSetup klasörleri çıkacak. Kurulumu ZIP'in içinden çalıştırma.")
 step(2, "App klasörünü SD kartın köküne kopyala", "Kartı tak. ZIP'teki <b>App</b> klasörünü, karttaki mevcut App klasörüyle birleştir. Sonuç aşağıdaki gibi olmalı. Kartı biçimlendirme; mevcut App klasörünü silme. FirstSetup bilgisayarda kalabilir.")
 p("SD kart/ &nbsp; (örnek: E: veya /Volumes/MIYOO)<br/>&nbsp;&nbsp;App/<br/>&nbsp;&nbsp;&nbsp;&nbsp;FriendsLibrary/<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.json<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;launch.sh", "code")
-p("Şimdi Windows için sayfa 2'ye, Mac için sayfa 3'e geç. Google girişi iki sistemde de sayfa 4'te anlatılıyor.", "small")
+p("Windows: sayfa 2. Mac: sayfa 3. Bilgisayarda Google girişi: sayfa 4. Telefondan kurulum: sayfa 7-8.", "small")
 
 heading(2, "Windows'ta hesabını bağla", "Kaynak kod, PowerShell 7 veya ayrıca rclone kurman gerekmez. Yönetici olarak çalıştırma.")
 step(1, "Kartın sürücü harfine bak", "Dosya Gezgini > Bu bilgisayar bölümünden Miyoo kartının harfini öğren. Örneğin <b>E:</b>. Her bilgisayarda aynı harf olmayabilir.")
@@ -112,16 +112,33 @@ p("Hesabı ayırmak için uygulamanın hesap bağlantısını kesme seçeneğini
 p("Doğrulama: Windows 5.1 yardımcısı sahte yanıtlarla test edildi; Mac yardımcısı sözdizimi kontrolünden geçti. Gerçek Mac girişi ve uçtan uca cihaz indirme kabul testleri henüz tamamlanmadı.", "small")
 p('Resmi kaynaklar: <link href="https://developers.google.com/identity/protocols/oauth2#expiration" color="#087F79">Google OAuth oturum süreleri</link> · <link href="https://rclone.org/drive/" color="#087F79">rclone Google Drive</link> · <link href="https://onionui.github.io/docs/" color="#087F79">OnionOS belgeleri</link>', "small")
 
+heading(7, "Telefonu bir kez ayarla", "Bilgisayardan Google girişi yerine kullanılabilen isteğe bağlı yöntem. İlk bağlantıda ve yeniden girişte aynı ayarlar kullanılır.")
+note("Önce uygulamayı karta kopyala", "Hazır arkadaş ZIP'indeki App klasörü SD kart kökünde olmalı. Google girişi için kartı tekrar çıkarmana gerek yok. Telefon + Miyoo aynı güvenilir Wi-Fi'da olmalı. QR tek başına bağlantıyı kurmaz.")
+step(1, "Miyoo'da SSH'yi aç", "Apps &gt; Tweaks &gt; Network &gt; SSH: Secure shell bölümünde Enable ve Enable authentication açık olsun. Miyoo'nun IP'sini Tweaks &gt; Network'ten veya Friends Library içindeki Phone setup guide'dan öğren.")
+step(2, "Telefona yerel tünel uygulaması kur", "Android'de ConnectBot yerel port yönlendirmesini destekler. iPhone'da Safari açıkken bağlantıyı sürdürebilen bir SSH istemcisi gerekir; Mobile SSH'nin geliştirici belgesi iOS ve Android ayarlarını açıklar. Uygulamayı resmi mağazadan edin; özellik/ücret durumunu kontrol et.")
+step(3, "Bir SSH profili kaydet", "Host: Miyoo'nun IP adresi. Port: <b>22</b>. Varsayılan kullanıcı/parola: <b>onion / onion</b>. Sunucu anahtarı parmak izini doğrula. Yönlendirme türü <b>LOCAL</b>; telefondaki loopback portu <b>53682</b>, hedef <b>127.0.0.1:53682</b> olmalı. Mobile SSH kuralı: <b>53682:127.0.0.1:53682</b>.")
+p('Ayrıntılı ve bağlantılı rehber: <link href="https://talhaozdemir.github.io/miyoo-friends-library/PHONE_SETUP.html" color="#087F79">Telefon kurulum rehberi</link>. Aynı açıklama uygulama içindeki <b>SELECT &gt; Phone setup guide</b> bölümünde çevrimdışı da okunabilir.', "small")
+p("SSH varsayılan parolası herkese açıktır ve cihazda geniş erişim sağlar. Açık/ortak Wi-Fi kullanma; kurulumdan sonra SSH'yi kapat. Gerçek telefon + Miyoo birlikte kabul testi henüz yapılmadı.", "small")
+
+heading(8, "QR ile hesabını bağla", "Telefon ayarını kaydettikten sonra ilk giriş veya gerektiğinde yeniden bağlantı için bu adımları kullan.")
+step(1, "Telefonda tüneli bağla", "Kaydettiğin Miyoo SSH profiline bağlan ve yerel tüneli açık tut. Tarayıcıya geçtiğinde uygulamanın bağlantısı kapanmamalı.")
+step(2, "Miyoo'da giriş QR'sini oluştur", "Friends Library &gt; SELECT &gt; Connect with phone. İlk açılışta A: Setup options üzerinden de ulaşılır. A: Create QR seç. Beş dakika geçerli yeni bir giriş QR'si gösterilir; X ile telefon rehberi açılır.")
+step(3, "Telefonda Google'ı onayla", "QR'yi okut, bağlantıyı normal tarayıcıda aç ve ortak Drive klasörüne davet edilmiş kendi Google hesabınla giriş yap. Kamera localhost bağlantısını metin sayarsa QR'nin bağlantısını adres çubuğunda aç. Tünel açık değilse bu adres çalışmaz.")
+step(4, "Miyoo'daki Connected mesajını bekle", "Telefonun Success ekranı tek başına yeterli değildir. Miyoo ortak klasöre erişimi doğrulayıp hesabı kaydettikten sonra Connected gösterir. Tüneli kapat; SSH'yi sadece kurulum için açtıysan kapat. Sonraki kullanım ve token yenilemesi telefonsuz devam eder.")
+note("Eski hesap korunur", "B ile iptal, zaman aşımı, yanlış Google hesabı, Wi-Fi veya yazma hatasında önceki hesap bağlantısı korunur. Başarılı yeni giriş mevcut hesabın yerini alır. ROM ve save dosyaları etkilenmez.")
+p("Bağlantı açılmıyorsa aynı Wi-Fi, tünel türü/portları, SSH doğrulaması, cihaz saati ve telefonun arka plan kısıtlarını kontrol et. Süre dolduysa yeni QR oluştur. Giriş QR'sini, tokenı veya rclone.conf dosyanı paylaşma.", "small")
+p("Doğrulama: sahte OAuth ile gerçek rclone, hesap koruma/iptal ve QR ekranı test edildi. Android/iOS tarayıcı + OnionOS uçtan uca fiziksel test bekleniyor. Bilgisayardan kurulum her zaman alternatif olarak kullanılabilir.", "small")
+
 def decorate(c, doc):
     w,h = A4
     c.setFillColor(TEAL); c.rect(0,h-9,w,9,fill=1,stroke=0)
     c.setFont("SegoeBold",9); c.setFillColor(NAVY)
     c.drawString(60,h-39,"MIYOO FRIENDS LIBRARY")
     c.setFont("Segoe",8); c.setFillColor(GRAY)
-    c.drawRightString(w-60,h-39,"v0.1.3 | Windows + macOS")
+    c.drawRightString(w-60,h-39,"v0.2.0 | Windows + macOS + Telefon")
     c.setStrokeColor(colors.HexColor("#D7E0E6")); c.line(60,48,w-60,48)
-    c.drawString(60,32,"Arkadaş kurulumu | 14 Kasım 2026")
-    c.drawRightString(w-60,32,f"{doc.page} / 6")
+    c.drawString(60,32,"Arkadaş kurulumu | 15 Kasım 2026")
+    c.drawRightString(w-60,32,f"{doc.page} / 8")
 
 doc = SimpleDocTemplate(str(OUT), pagesize=A4, rightMargin=60, leftMargin=60,
                         topMargin=65, bottomMargin=62, title="Miyoo Friends Library - Kurulum Rehberi",

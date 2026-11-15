@@ -1,5 +1,11 @@
 # Üçüncü taraf kayıtları
 
+- **Nayuki QR Code generator (C)** — Project Nayuki; MIT.
+  Değiştirilmeden `vendor/qrcodegen/` altında; revision
+  `bcfe1b018cec5f1f91b5705eca5bb4cdd34e9f8d`.
+  Kaynak: <https://github.com/nayuki/QR-Code-generator>.
+  Tam lisans dağıtımda `licenses/qrcodegen-MIT.txt`.
+
 - **rclone 1.76.0** — Nick Craig-Wood ve katkı sağlayanlar; MIT.
   Kaynak dağıtımındaki `COPYING` paket içindeki `licenses/rclone-MIT.txt` dosyasına alınır.
   Kaynak ve dependency manifestleri: <https://github.com/rclone/rclone/tree/v1.76.0>.

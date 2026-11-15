@@ -4,6 +4,8 @@
 #include "fl_backend.h"
 #include "fl_download.h"
 #include "fl_ui.h"
+#include "fl_phone.h"
+#include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -26,7 +28,7 @@ typedef struct {
     char (*labels)[96];
     size_t selected,scroll;
 } Frame;
-typedef enum { SCREEN_LIST,SCREEN_COLLECTIONS,SCREEN_DETAIL,SCREEN_REPLACE,SCREEN_DOWNLOAD,SCREEN_MESSAGE,SCREEN_DISCONNECT,SCREEN_SETUP } Screen;
+typedef enum { SCREEN_LIST,SCREEN_COLLECTIONS,SCREEN_DETAIL,SCREEN_REPLACE,SCREEN_DOWNLOAD,SCREEN_MESSAGE,SCREEN_DISCONNECT,SCREEN_SETUP,SCREEN_ACCOUNT,SCREEN_PHONE_READY,SCREEN_PHONE,SCREEN_PHONE_GUIDE,SCREEN_COMPUTER } Screen;
 typedef struct {
     FlConfig config;FlSystems systems;FlUi *ui;FlBackend backend;FlDownload download;FlProcess hash;
     Frame frames[3];unsigned level;Screen screen,return_screen;
@@ -41,11 +43,36 @@ typedef struct {
     size_t game_selected[2],game_scroll[2];
     Screen console_return;
     FlError pending_warning;
+    FlPhone phone;
+    Screen account_back,guide_back;
+    unsigned account_selected,guide_page;
+    uint8_t phone_qr[FL_QR_BYTES],guide_qr[FL_QR_BYTES];
+    char qr_url[192],device_ip[64];
+    bool reload_after_message;
 } App;
 static volatile sig_atomic_t shutdown_requested=0;
 static int frame_rows(App *a,Frame *f,unsigned level);
 static void console_accept(App *a,FlListing *part,FlError *warning);
 static void request_shutdown(int sig){(void)sig;shutdown_requested=1;}
+static void device_address(char out[64]){
+    struct ifaddrs *list=NULL;snprintf(out,64,"Not connected");if(getifaddrs(&list))return;
+    for(struct ifaddrs *p=list;p;p=p->ifa_next)if(p->ifa_addr&&p->ifa_addr->sa_family==AF_INET&&!strcmp(p->ifa_name,"wlan0")){
+        inet_ntop(AF_INET,&((struct sockaddr_in*)p->ifa_addr)->sin_addr,out,64);break;
+    }
+    freeifaddrs(list);
+}
+static void open_account(App *a,Screen back){a->account_back=back;a->account_selected=0;a->screen=SCREEN_ACCOUNT;device_address(a->device_ip);a->dirty=true;}
+static void open_phone_guide(App *a,Screen back){a->guide_back=back;a->screen=SCREEN_PHONE_GUIDE;a->guide_page=0;device_address(a->device_ip);a->dirty=true;}
+static const char *phone_guide[][9]={
+    {"PHONE SETUP: OVERVIEW","Keep the computer setup if you prefer.","Phone login is an optional alternative.","A QR alone cannot connect the devices.","You need a phone app with SSH LOCAL forwarding.","Android and iOS are supported in principle.","Phone/device testing is still required.","RIGHT: next page. B: return."},
+    {"1. CONNECT AND ENABLE SSH","Connect phone + Miyoo to trusted same Wi-Fi.","On Miyoo: Apps > Tweaks > Network > SSH.","Turn ON Enable AND Enable authentication.","Default user: onion   Password: onion","This default password is publicly known.","Avoid shared/public Wi-Fi; disable SSH later.","Return to Friends Library > SELECT > Account."},
+    {"2. INSTALL A PHONE TUNNEL APP","Use an SSH app with LOCAL port forwarding.","Android: ConnectBot supports this feature.","iOS: use an SSH app with local tunnels.","Mobile SSH documents Android + iOS support.","Store names, features or fees can change.","See the online guide QR on the last page.","No Google password is entered in the SSH app."},
+    {"3. SAVE A PHONE CONNECTION","Host: the Miyoo IP shown below. Port: 22.","SSH user: onion   SSH password: onion","Verify the SSH host fingerprint before saving.","Forward type: LOCAL (not remote or SOCKS).","Phone/source port: 53682, loopback only.","Destination host: 127.0.0.1, port: 53682.","Save the profile as Miyoo Friends Library."},
+    {"4. OPEN THE LOGIN QR","Connect the saved SSH profile on your phone.","Keep its tunnel running in the background.","On Miyoo select Connect with phone > A.","Scan the login QR and OPEN it in your browser.","Some scanners treat localhost QR as text.","If needed paste its link into the address bar.","Use the Google account invited to the library."},
+    {"5. FINISH OR CANCEL","Approve read-only Google Drive access.","Wait for Connected on the Miyoo, not just phone.","The app checks access to the shared folder.","Only then is the new account saved on the SD.","B cancels. Failure keeps the previous account.","Close the phone tunnel. Disable SSH if unused.","Normal use and refresh need no phone or PC."},
+    {"TROUBLESHOOTING","Cannot open QR: tunnel must be connected.","127.0.0.1 on the phone means the phone itself.","A tunnel forwards it back to your Miyoo.","Wrong account: choose an invited Google user.","Wrong time/Wi-Fi: fix these before retrying.","App says cancelled/timeout: create a NEW QR.","Never share login QR, tokens or rclone.conf."},
+    {"ONLINE GUIDE","Open this guide on","your phone for links,","connection settings","and troubleshooting.","No account data is","included in this QR.","B returns to the app."}
+};
 static void bytes_text(uint64_t bytes,char out[48]) {
     static const char *units[]={"B","KiB","MiB","GiB","TiB"};unsigned unit=0;double n=(double)bytes;
     while(n>=1024&&unit<4){n/=1024;unit++;}snprintf(out,48,unit?"%.1f %s":"%.0f %s",n,units[unit]);
@@ -235,6 +262,27 @@ static void update_markers(App *a,Frame *f) {
         }
     }
 }
+static void pump_phone(App *a){
+    FlError e={0};int rc=fl_phone_poll(&a->phone,&e);
+    if(!rc){
+        if(strcmp(a->qr_url,a->phone.url)){
+            snprintf(a->qr_url,sizeof(a->qr_url),"%s",a->phone.url);
+            if(*a->qr_url&&fl_phone_qr(a->qr_url,a->phone_qr)){
+                fl_phone_cancel(&a->phone);a->qr_url[0]=0;
+            }
+            a->dirty=true;
+        }
+        return;
+    }
+    if(rc>0){
+        a->config=a->phone.config;a->disconnected=false;a->offline=false;
+        for(unsigned i=0;i<3;i++)frame_free(&a->frames[i]);
+        library_clear(a);a->level=0;
+        a->reload_after_message=true;
+    }
+    fl_phone_destroy(&a->phone);a->qr_url[0]=0;memset(a->phone_qr,0,sizeof(a->phone_qr));
+    message(a,e.message,e.code,rc>0?SCREEN_LIST:SCREEN_ACCOUNT);
+}
 static void draw(App *a) {
     Frame *f=&a->frames[a->level];FlView v={0};char lines[9][FL_PATH];const char *details[9];
     char collection_labels[2][96],collection_title[FL_NAME];const char *collection_rows[2]={collection_labels[0],collection_labels[1]};
@@ -280,13 +328,51 @@ static void draw(App *a) {
         if(p>=0)snprintf(lines[4],sizeof(lines[4]),"%.0f%% transferred",p*100);else snprintf(lines[4],sizeof(lines[4]),"Waiting for file data...");
         v.details=details;v.detail_count=5;v.progress=true;v.progress_fraction=p;v.footer="B: CANCEL DOWNLOAD";
         v.status=p>=1?"Verifying file and saving to SD card. Please wait.":"Existing ROM is preserved until the new file is verified.";
+    } else if(a->screen==SCREEN_ACCOUNT){
+        static const char *rows[]={"Connect with phone","Phone setup guide","Computer setup guide","Disconnect account"};
+        v.subtitle="GOOGLE ACCOUNT / SETUP";v.rows=rows;v.row_count=4;v.selected=a->account_selected;
+        v.footer="A: OPEN   B: BACK";v.status="Phone login is optional. Existing computer setup still works.";
+    } else if(a->screen==SCREEN_PHONE_READY){
+        v.subtitle="CONNECT WITH PHONE";
+        const char *ready[]={"First connect your phone's saved SSH tunnel.","Same trusted Wi-Fi. See Phone setup guide.","Forward: phone 53682 > Miyoo 127.0.0.1:53682","You will sign in on Google's own page.","New account saves only after the library check.","If already connected, this replaces the account.","Cancel/failure keeps the previous connection."};
+        v.details=ready;v.detail_count=7;v.footer="A: CREATE QR   X: PHONE GUIDE   B: BACK";
+        v.status="Works for first setup with the friends bundle, or to reconnect.";
+        /* Draw synchronously: the borrowed array stays alive for this call. */
+        if(fl_ui_draw(a->ui,&v,&a->error))a->quit=true;
+        clock_gettime(CLOCK_MONOTONIC,&a->last_paint);a->dirty=false;return;
+    } else if(a->screen==SCREEN_PHONE){
+        v.subtitle=a->phone.phase==2?"CHECKING SHARED LIBRARY":"GOOGLE LOGIN / PHONE";
+        snprintf(lines[0],sizeof(lines[0]),"%s",*a->qr_url?"SCAN AND OPEN":"PLEASE WAIT");
+        snprintf(lines[1],sizeof(lines[1]),"Tunnel must stay on.");snprintf(lines[2],sizeof(lines[2]),"Use phone browser.");
+        snprintf(lines[3],sizeof(lines[3]),"Invited Google account.");snprintf(lines[5],sizeof(lines[5]),"QR lasts 5 minutes.");
+        snprintf(lines[6],sizeof(lines[6]),"Keep this QR private.");
+        v.details=details;v.detail_count=7;v.qr=*a->qr_url?a->phone_qr:NULL;v.busy=true;
+        v.status=a->phone.cancelled?"Cancelling. Existing account will be kept.":a->phone.phase==2?"Google approved. Checking shared folder before saving the account.":"First time? Press X for the phone setup guide. No PC or SD removal.";
+        v.footer="B: CANCEL LOGIN   X: PHONE GUIDE";
+    } else if(a->screen==SCREEN_PHONE_GUIDE){
+        unsigned page=a->guide_page;if(page>7)page=7;
+        snprintf(lines[8],sizeof(lines[8]),"Miyoo IP: %s   Guide %u/8",a->device_ip,page+1);
+        const char *guide[9];for(unsigned i=0;i<8;i++)guide[i]=phone_guide[page][i];guide[8]=lines[8];
+        v.subtitle="PHONE SETUP GUIDE";v.details=guide;v.detail_count=page==7?8:9;
+        if(page==7&&fl_phone_qr("https://talhaozdemir.github.io/miyoo-friends-library/PHONE_SETUP.html",a->guide_qr)==0)v.qr=a->guide_qr;
+        v.footer="LEFT/RIGHT: PAGE   B: RETURN";v.status=page==7?"Public instructions only. This QR does not start a Google login.":"Setup only: keep SSH authenticated; turn it off again when finished.";
+        if(fl_ui_draw(a->ui,&v,&a->error))a->quit=true;
+        clock_gettime(CLOCK_MONOTONIC,&a->last_paint);a->dirty=false;return;
+    } else if(a->screen==SCREEN_COMPUTER){
+        v.subtitle="COMPUTER SETUP (UNCHANGED)";
+        snprintf(lines[0],sizeof(lines[0]),"Extract the friends ZIP to the SD card root.");
+        snprintf(lines[2],sizeof(lines[2]),"Windows: FirstSetup > Connect-Windows.cmd");
+        snprintf(lines[3],sizeof(lines[3]),"Mac: FirstSetup > Connect-Mac.command");
+        snprintf(lines[5],sizeof(lines[5]),"Sign in with your invited Google account.");
+        snprintf(lines[6],sizeof(lines[6]),"Safely eject the card, then open this app.");
+        v.details=details;v.detail_count=7;v.footer="B: BACK";v.status="Normal automatic renewal is unchanged; phone login is optional.";
     } else if(a->screen==SCREEN_DISCONNECT){
         v.subtitle="DISCONNECT GOOGLE ACCOUNT";snprintf(lines[0],sizeof(lines[0]),"Delete this device's stored credentials?");snprintf(lines[2],sizeof(lines[2]),"Online authorization revocation will be tried.");snprintf(lines[3],sizeof(lines[3]),"Downloaded games will remain on the SD card.");v.details=details;v.detail_count=4;v.footer="A: DISCONNECT   B: CANCEL";v.error=true;v.status="Each friend uses their own Google authorization.";
     } else if(a->screen==SCREEN_SETUP){
-        v.subtitle="INITIAL SETUP REQUIRED";snprintf(lines[0],sizeof(lines[0]),"Authorize your account on a computer.");snprintf(lines[2],sizeof(lines[2]),"Use scripts/setup-account.ps1 from the source");snprintf(lines[3],sizeof(lines[3]),"or follow the included authentication guide.");snprintf(lines[5],sizeof(lines[5]),"Settings: .config/friends-library/");v.details=details;v.detail_count=6;v.footer="X: RELOAD SETUP   B: EXIT";v.status=a->message[0]?a->message:"See README and docs/AUTHENTICATION.md.";
+        v.subtitle="INITIAL SETUP REQUIRED";snprintf(lines[0],sizeof(lines[0]),"Choose phone OR computer setup.");snprintf(lines[2],sizeof(lines[2]),"A opens account / connection options.");snprintf(lines[3],sizeof(lines[3]),"Phone guide explains the required tunnel app.");snprintf(lines[5],sizeof(lines[5]),"Each friend signs in with their own account.");v.details=details;v.detail_count=6;v.footer="A: SETUP OPTIONS   X: RELOAD   B: EXIT";v.status=a->message[0]?a->message:"No stored account. Phone setup needs the friends bundle.";
     } else {
         v.subtitle=a->error.code==FL_OK?"COMPLETED":"NOTICE";snprintf(lines[0],sizeof(lines[0]),"%s",a->error.code==FL_OK?"Operation completed.":fl_code_name(a->error.code));
-        v.details=details;v.detail_count=1;v.error=a->error.code!=FL_OK;v.status=a->message;v.footer="A / B: RETURN";
+        v.details=details;v.detail_count=1;v.error=a->error.code!=FL_OK;v.status=a->message;v.footer="A / B: RETURN   SELECT: ACCOUNT";
     }
     if(fl_ui_draw(a->ui,&v,&a->error))a->quit=true;
     clock_gettime(CLOCK_MONOTONIC,&a->last_paint);
@@ -304,13 +390,35 @@ static void handle_key(App *a,FlKey key) {
     if(key==FL_KEY_EXIT){a->quit=true;return;}
     if(a->loading){if(key==FL_KEY_BACK){fl_backend_cancel(&a->backend);}return;}
     if(a->screen==SCREEN_DOWNLOAD){if(key==FL_KEY_BACK)fl_download_cancel(&a->download);return;}
-    if(a->screen==SCREEN_MESSAGE){if(key==FL_KEY_OPEN||key==FL_KEY_BACK){a->screen=a->return_screen;if(a->screen==SCREEN_DETAIL)a->local=fl_local_check(&a->config,a->system,&a->selected,false,NULL);}return;}
-    if(a->screen==SCREEN_SETUP){if(key==FL_KEY_BACK)a->quit=true;else if(key==FL_KEY_REFRESH){
+    if(a->screen==SCREEN_PHONE_GUIDE){if(key==FL_KEY_BACK)a->screen=a->guide_back;else if(key==FL_KEY_RIGHT||key==FL_KEY_DOWN||key==FL_KEY_PAGE_DOWN){if(a->guide_page<7)a->guide_page++;}else if(key==FL_KEY_LEFT||key==FL_KEY_UP||key==FL_KEY_PAGE_UP){if(a->guide_page)a->guide_page--;}return;}
+    if(a->screen==SCREEN_COMPUTER){if(key==FL_KEY_BACK)a->screen=SCREEN_ACCOUNT;return;}
+    if(a->screen==SCREEN_ACCOUNT){
+        if(key==FL_KEY_BACK)a->screen=a->account_back;
+        else if(key==FL_KEY_UP){if(a->account_selected)a->account_selected--;}
+        else if(key==FL_KEY_DOWN){if(a->account_selected<3)a->account_selected++;}
+        else if(key==FL_KEY_OPEN){switch(a->account_selected){case 0:a->screen=SCREEN_PHONE_READY;break;case 1:open_phone_guide(a,SCREEN_ACCOUNT);break;case 2:a->screen=SCREEN_COMPUTER;break;case 3:a->screen=SCREEN_DISCONNECT;break;}}
+        return;
+    }
+    if(a->screen==SCREEN_PHONE_READY){
+        if(key==FL_KEY_BACK)a->screen=SCREEN_ACCOUNT;
+        else if(key==FL_KEY_REFRESH)open_phone_guide(a,SCREEN_PHONE_READY);
+        else if(key==FL_KEY_OPEN){
+            if(a->demo){message(a,"Phone login needs the installed friends bundle, not the metadata demo.",FL_ERR_CONFIG,SCREEN_PHONE_READY);return;}
+            if(!network_available()){message(a,"Connect Miyoo and phone to the same trusted Wi-Fi first.",FL_ERR_OFFLINE,SCREEN_PHONE_READY);return;}
+            if(fl_phone_start(&a->phone,&a->config,&a->error))message(a,a->error.message,a->error.code,SCREEN_PHONE_READY);
+            else {a->qr_url[0]=0;a->screen=SCREEN_PHONE;}
+        }return;
+    }
+    if(a->screen==SCREEN_PHONE){if(key==FL_KEY_BACK)fl_phone_cancel(&a->phone);else if(key==FL_KEY_REFRESH)open_phone_guide(a,SCREEN_PHONE);return;}
+    if(a->screen==SCREEN_MESSAGE){
+        if(key==FL_KEY_DISCONNECT){open_account(a,a->return_screen);return;}
+        if(key==FL_KEY_OPEN||key==FL_KEY_BACK){a->screen=a->return_screen;if(a->reload_after_message){a->reload_after_message=false;load_folder(a,0,a->config.root_id,true);}else if(a->screen==SCREEN_DETAIL)a->local=fl_local_check(&a->config,a->system,&a->selected,false,NULL);}return;}
+    if(a->screen==SCREEN_SETUP){if(key==FL_KEY_BACK)a->quit=true;else if(key==FL_KEY_OPEN||key==FL_KEY_DISCONNECT)open_account(a,SCREEN_SETUP);else if(key==FL_KEY_REFRESH){
         char sd[FL_PATH],appdir[FL_PATH];snprintf(sd,sizeof(sd),"%s",a->config.sd_root);snprintf(appdir,sizeof(appdir),"%s",a->config.app_dir);
         if(fl_config_load(sd,appdir,&a->config,&a->error))snprintf(a->message,sizeof(a->message),"%s",a->error.message);
         else {a->level=0;load_folder(a,0,a->config.root_id,true);}}
         return;}
-    if(a->screen==SCREEN_DISCONNECT){if(key==FL_KEY_BACK)a->screen=SCREEN_LIST;else if(key==FL_KEY_OPEN){
+    if(a->screen==SCREEN_DISCONNECT){if(key==FL_KEY_BACK)a->screen=SCREEN_ACCOUNT;else if(key==FL_KEY_OPEN){
         if(a->demo){message(a,"Demo has no stored account.",FL_OK,SCREEN_LIST);return;}
         if(fl_backend_disconnect_start(&a->backend,&a->config,true,&a->error))message(a,a->error.message,a->error.code,SCREEN_LIST);
         else {a->loading=true;a->screen=SCREEN_LIST;}}
@@ -331,7 +439,7 @@ static void handle_key(App *a,FlKey key) {
     else if(key==FL_KEY_PAGE_UP||key==FL_KEY_LEFT)move_selection(f,-FL_UI_VISIBLE_ROWS);
     else if(key==FL_KEY_PAGE_DOWN||key==FL_KEY_RIGHT)move_selection(f,FL_UI_VISIBLE_ROWS);
     else if(key==FL_KEY_BACK){if(a->level==2){a->game_selected[a->collection]=f->selected;a->game_scroll[a->collection]=f->scroll;a->screen=SCREEN_COLLECTIONS;}else if(a->level)a->level--;else a->quit=true;}
-    else if(key==FL_KEY_DISCONNECT&&a->level==0)a->screen=SCREEN_DISCONNECT;
+    else if(key==FL_KEY_DISCONNECT&&a->level==0)open_account(a,SCREEN_LIST);
     else if(key==FL_KEY_REFRESH){char id[FL_ID];snprintf(id,sizeof(id),"%s",f->folder[0]?f->folder:a->config.root_id);load_folder(a,a->level,id,true);}
     else if(key==FL_KEY_OPEN&&f->listing.count){FlItem *item=&f->listing.items[f->selected];
         if(a->level==0){snprintf(a->friend_name,sizeof(a->friend_name),"%s",item->name);frame_free(&a->frames[1]);frame_free(&a->frames[2]);library_clear(a);snprintf(a->frames[1].title,sizeof(a->frames[1].title),"%s",item->name);load_folder(a,1,item->id,false);}
@@ -359,6 +467,7 @@ int main(int argc,char **argv) {
         if(snprintf(lockpath,sizeof(lockpath),"%s/app.lock",app.config.data_dir)>=(int)sizeof(lockpath)){fprintf(stderr,"App data path is too long.\n");fl_systems_free(&app.systems);return 1;}
         lock=open(lockpath,O_CREAT|O_RDWR|O_NOFOLLOW,0600);
         if(lock<0||flock(lock,LOCK_EX|LOCK_NB)){fprintf(stderr,"Friends Library is already running or app data is not writable.\n");if(lock>=0)close(lock);fl_systems_free(&app.systems);return 1;}fcntl(lock,F_SETFD,FD_CLOEXEC);
+        fl_phone_recover(&app.config);
         if(fl_download_recover(&app.config,&app.systems,&app.error))snprintf(app.notice,sizeof(app.notice),"%s",app.error.message);
     }
     struct sigaction action;memset(&action,0,sizeof(action));action.sa_handler=request_shutdown;sigemptyset(&action.sa_mask);sigaction(SIGTERM,&action,NULL);sigaction(SIGINT,&action,NULL);signal(SIGPIPE,SIG_IGN);
@@ -372,6 +481,7 @@ int main(int argc,char **argv) {
     app.dirty=true;
     if(*screenshot){draw(&app);int rc=fl_ui_screenshot(app.ui,screenshot,&app.error);app.quit=true;if(rc)fprintf(stderr,"Preview failed: %s\n",app.error.message);}
     while(!app.quit&&!shutdown_requested){
+        if(app.phone.active)pump_phone(&app);
         if(app.loading)pump_backend(&app);
         if(app.hash_active){int rc=fl_process_poll(&app.hash,NULL);if(rc){if(rc>0&&app.hash.exit_code==0){app.local=!strncasecmp(app.hash.out,app.selected.md5,32)?FL_LOCAL_VERIFIED:FL_LOCAL_CHANGED;}fl_process_destroy(&app.hash);app.hash_active=false;app.dirty=true;}}
         if(app.download.active){FlError error={0};int rc=fl_download_poll(&app.download,&error);
@@ -383,11 +493,11 @@ int main(int argc,char **argv) {
             else {if(error.code==FL_ERR_OFFLINE||error.code==FL_ERR_TIMEOUT)app.offline=true;message(&app,error.message,error.code,SCREEN_LIST);}
         }}
         if(app.dirty)draw(&app);
-        bool working=app.loading||app.download.active||app.hash_active;
+        bool working=app.loading||app.download.active||app.hash_active||app.phone.active;
         /* A finite idle wait also lets SIGTERM/INT reach orderly worker cleanup. */
         handle_key(&app,fl_ui_wait_event(app.ui,working?80:500));
     }
-    fl_backend_destroy(&app.backend);fl_process_destroy(&app.hash);fl_download_destroy(&app.download);fl_ui_close(app.ui);
+    fl_phone_destroy(&app.phone);fl_backend_destroy(&app.backend);fl_process_destroy(&app.hash);fl_download_destroy(&app.download);fl_ui_close(app.ui);
     for(unsigned i=0;i<3;i++)frame_free(&app.frames[i]);
     library_clear(&app);
     fl_systems_free(&app.systems);if(lock>=0)close(lock);return 0;

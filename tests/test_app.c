@@ -78,9 +78,17 @@ int main(int argc,char **argv) {
     snprintf(a.frames[1].listing.items[0].name,FL_NAME,"UNVERIFIED CONSOLE");
     handle_key(&a,FL_KEY_OPEN); CHECK(a.error.code==FL_ERR_UNSUPPORTED); dismiss(&a); CHECK(a.level==1);
     handle_key(&a,FL_KEY_BACK); CHECK(a.level==0);
-    handle_key(&a,FL_KEY_DISCONNECT); CHECK(a.screen==SCREEN_DISCONNECT);
+    handle_key(&a,FL_KEY_DISCONNECT); CHECK(a.screen==SCREEN_ACCOUNT);
+    handle_key(&a,FL_KEY_OPEN);CHECK(a.screen==SCREEN_PHONE_READY);
+    handle_key(&a,FL_KEY_REFRESH);CHECK(a.screen==SCREEN_PHONE_GUIDE);
+    for(unsigned i=0;i<10;i++)handle_key(&a,FL_KEY_RIGHT);CHECK(a.guide_page==7);
+    handle_key(&a,FL_KEY_BACK);CHECK(a.screen==SCREEN_PHONE_READY);
+    handle_key(&a,FL_KEY_BACK);CHECK(a.screen==SCREEN_ACCOUNT);
+    for(unsigned i=0;i<3;i++)handle_key(&a,FL_KEY_DOWN);
+    handle_key(&a,FL_KEY_OPEN);CHECK(a.screen==SCREEN_DISCONNECT);
+    handle_key(&a,FL_KEY_BACK);CHECK(a.screen==SCREEN_ACCOUNT);
     handle_key(&a,FL_KEY_BACK); CHECK(a.screen==SCREEN_LIST); CHECK(!a.disconnected);
-    handle_key(&a,FL_KEY_DISCONNECT); handle_key(&a,FL_KEY_OPEN);
+    handle_key(&a,FL_KEY_DISCONNECT);for(unsigned i=0;i<3;i++)handle_key(&a,FL_KEY_DOWN);handle_key(&a,FL_KEY_OPEN);handle_key(&a,FL_KEY_OPEN);
     CHECK(a.screen==SCREEN_MESSAGE && a.error.code==FL_OK); CHECK(!a.disconnected); dismiss(&a);
     /* Simulated stale cache is visible after a failed refresh, with offline status. */
     a.backend.initialized=true; a.backend.done=true; a.backend.cache_fallback=true;
@@ -102,6 +110,16 @@ int main(int argc,char **argv) {
       fl_backend_destroy(&a.backend); a.loading=false;
     }
     for(unsigned i=0;i<3;++i)frame_free(&a.frames[i]);
+    /* Render every offline guide page, account menu and initial setup. */
+    CHECK(setenv("SDL_VIDEODRIVER","dummy",1)==0);a.ui=fl_ui_open(&error);CHECK(a.ui!=NULL);a.level=0;
+    const Screen screens[]={SCREEN_ACCOUNT,SCREEN_PHONE_READY,SCREEN_SETUP,SCREEN_COMPUTER};
+    for(unsigned i=0;i<4;i++){a.screen=screens[i];draw(&a);CHECK(!a.quit);}
+    a.screen=SCREEN_PHONE_GUIDE;snprintf(a.device_ip,sizeof(a.device_ip),"192.168.1.42");
+    for(unsigned page=0;page<8;page++){
+        a.guide_page=page;draw(&a);CHECK(!a.quit);char shot[128];snprintf(shot,sizeof(shot),"build/ui-phone-guide-%u.bmp",page+1);CHECK(fl_ui_screenshot(a.ui,shot,&error)==0);
+        if(page<7)for(unsigned line=0;line<8;line++)CHECK(strlen(phone_guide[page][line])<=49);
+    }
+    fl_ui_close(a.ui);
     library_clear(&a);
     fl_systems_free(&a.systems); fl_process_destroy(&a.hash);
     printf("app: %u controller assertions passed (demo/cache mocks, no Google account)\n",checks);

@@ -22,6 +22,7 @@ typedef struct {
     size_t row_count, selected, scroll;
     const char *const *details;
     size_t detail_count;
+    const uint8_t *qr; /* optional QR matrix, generated once per session */
     bool progress, busy, error;
     double progress_fraction; /* [0,1], negative means indeterminate */
 } FlView;
