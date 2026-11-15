@@ -1,5 +1,19 @@
 # Gerçek cihaz kabul listesi
 
+0.3.0 HTTPS telefon girişi: aşağıdaki maddeler fiziksel cihazda **henüz denenmedi**.
+
+- [ ] Hiç settings/token olmadan hazır HTTPS profili ile QR oluşur.
+- [ ] iPhone Safari ve Android Chrome, ek uygulama/SSH olmadan Google girişini tamamlar.
+- [ ] Telefon ve Miyoo farklı internet ağlarında da eşleşir; altı haneli kod aynıdır.
+- [ ] A onayı öncesi eski hesap değişmez; kod eşleşince A ile atomik kaydedilir.
+- [ ] Yanlış/izinsiz hesap, B iptal, beş dakika aşımı ve ağ kesintisi eski hesabı korur.
+- [ ] Yeniden açılış, en az iki saat sonra yenileme ve gerçek Drive indirmesi çalışır.
+- [ ] Servis geçici 429/503 verdiğinde Google izni iptal edilmiş gibi davranılmaz.
+- [ ] Web client secret SD kartta yoktur; kişisel token ve QR loglarda yoktur.
+- [ ] Dört sayfalık çevrimdışı rehber, rehber QR'si ve önceki ekrana dönüş okunabilir.
+- [ ] Bilgisayar kurulumu ve Advanced SSH seçenekleri çalışır.
+- [ ] Uygulamadan çıkınca curl/rclone alt süreci veya LAN login server kalmaz.
+
 Durum: **Kullanıcı 0.1.1'de çizimin çalıştığını ama ters olduğunu doğruladı. 0.1.2 yön ve ikon güncellemesinin cihaz testi bekleniyor.**
 Otomatik mock testlerinin geçmesi aşağıdaki kutuları işaretlemez.
 

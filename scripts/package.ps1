@@ -35,7 +35,7 @@ foreach ($file in Get-ChildItem -LiteralPath $appDir -Recurse -File) {
 }
 $distDir = Join-Path $projectRoot 'dist'
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
-$zip = Join-Path $distDir 'Miyoo-Friends-Library-v0.2.0-OnionOS-4.3.zip'
+$zip = Join-Path $distDir 'Miyoo-Friends-Library-v0.3.0-OnionOS-4.3.zip'
 Compress-Archive -LiteralPath "$projectRoot/package/App" -DestinationPath $zip -Force
 $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
 Set-Content -LiteralPath "$zip.sha256" -Encoding utf8 -Value "$hash  $([IO.Path]::GetFileName($zip))"

@@ -27,7 +27,7 @@ bad:fl_error(error,FL_ERR_PATH,"Account files must be regular files on the SD ca
 }
 
 int fl_phone_profile(const FlConfig *c,FlPhoneProfile *p,FlError *error){
-    char *text=NULL,*line,*save=NULL;bool exists=false,selected=false,found=false,id=false,secret=false;
+    char *text=NULL,*line,*save=NULL;bool exists=false,selected=false,found=false,id=false,secret=false,broker=false;
     memset(p,0,sizeof(*p));
     if(snapshot(c->credential_path,131072,&text,&exists,error))return -1;
     if(exists){
@@ -39,11 +39,15 @@ int fl_phone_profile(const FlConfig *c,FlPhoneProfile *p,FlError *error){
             if(!selected||!*s||*s=='#'||*s==';')continue;
             eq=strchr(s,'=');if(!eq)goto parse_bad;*eq++=0;s=trim_phone(s);eq=trim_phone(eq);
             if(!strcmp(s,"client_id")){if(id||!field_valid(eq,256))goto parse_bad;id=true;strcpy(p->client_id,eq);}
-            if(!strcmp(s,"client_secret")){if(secret||!field_valid(eq,256))goto parse_bad;secret=true;strcpy(p->client_secret,eq);}
+            if(!strcmp(s,"client_secret")){if(secret)goto parse_bad;secret=true;if(!*eq)broker=true;else {if(!field_valid(eq,256))goto parse_bad;strcpy(p->client_secret,eq);}}
+            if(!strcmp(s,"token_url")&&!strncmp(eq,"https://",8))broker=true;
         }
         free(text);text=NULL;
+        if(broker){memset(p,0,sizeof(*p));goto bundled;}
         if(!found||!profile_valid(p))goto invalid;
-    }else{
+        fl_error(error,FL_OK,"");return 0;
+    }
+bundled:{
         char path[FL_PATH];cJSON *j=NULL,*v;unsigned keys=0;
         if(join(path,c->app_dir,"config/phone-setup.json")||fl_read_file(path,8192,&text,error))goto unavailable;
         j=cJSON_Parse(text);free(text);text=NULL;if(!cJSON_IsObject(j)){cJSON_Delete(j);goto invalid;}
@@ -87,8 +91,8 @@ int fl_phone_qr(const char *text,uint8_t qr[FL_QR_BYTES]){
 static void cleanup_workspace(const char *workspace){
     char path[FL_PATH];struct stat st;
     if(!*workspace||lstat(workspace,&st)||!S_ISDIR(st.st_mode)||S_ISLNK(st.st_mode))return;
-    const char *names[]={"rclone.conf","rclone.conf.old","verify.conf"};
-    for(unsigned i=0;i<3;i++)if(!join(path,workspace,names[i])&&!lstat(path,&st)&&S_ISREG(st.st_mode)&&!S_ISLNK(st.st_mode))unlink(path);
+    const char *names[]={"rclone.conf","rclone.conf.old","verify.conf","request.conf","request.json"};
+    for(unsigned i=0;i<5;i++)if(!join(path,workspace,names[i])&&!lstat(path,&st)&&S_ISREG(st.st_mode)&&!S_ISLNK(st.st_mode))unlink(path);
     rmdir(workspace); /* Never recursively remove unknown files. */
 }
 void fl_phone_recover(const FlConfig *c){
@@ -111,11 +115,10 @@ static int finish_phone(FlPhone *p,FlCode code,const char *message,FlError *erro
     return code==FL_OK?1:-1;
 }
 
-int fl_phone_start(FlPhone *p,const FlConfig *c,FlError *error){
-    char seed[2048],remote[80];struct stat st;
-    if(p->active){fl_error(error,FL_ERR_BUSY,"Phone login is already running.");return -1;}
-    fl_phone_destroy(p);p->config=*c;
-    if(fl_phone_profile(c,&p->profile,error))return -1;
+int fl_account_stage(FlPhone *p,const FlConfig *c,const FlPhoneProfile *profile,FlError *error){
+    struct stat st;
+    if(p->active){fl_error(error,FL_ERR_BUSY,"Account setup is already running.");return -1;}
+    fl_phone_destroy(p);p->config=*c;p->profile=*profile;
     if(snapshot(c->credential_path,131072,&p->old_credentials,&p->had_credentials,error)||snapshot(c->settings_path,16384,&p->old_settings,&p->had_settings,error))goto fail;
     if(p->had_settings&&!fl_id_valid(c->root_id)){fl_error(error,FL_ERR_CONFIG,"Repair the existing library settings with computer setup first.");goto fail;}
     if(lstat(c->data_dir,&st)||!S_ISDIR(st.st_mode)||S_ISLNK(st.st_mode)){fl_error(error,FL_ERR_PATH,"App data directory is unsafe.");goto fail;}
@@ -124,6 +127,13 @@ int fl_phone_start(FlPhone *p,const FlConfig *c,FlError *error){
     if(join(p->workspace,c->data_dir,".phone-auth-XXXXXX")||!mkdtemp(p->workspace)){p->workspace[0]=0;fl_error(error,FL_ERR_IO,"Cannot create private login workspace. Check SD space and write access.");goto fail;}
     p->staged=*c;strcpy(p->staged.root_id,p->profile.root_id);
     if(join(p->staged.credential_path,p->workspace,"rclone.conf")){fl_error(error,FL_ERR_PATH,"Login workspace path is too long.");goto fail;}
+    fl_error(error,FL_OK,"");return 0;
+fail:fl_phone_destroy(p);return -1;
+}
+int fl_phone_start(FlPhone *p,const FlConfig *c,FlError *error){
+    char seed[2048],remote[80];FlPhoneProfile profile;
+    if(p->active){fl_error(error,FL_ERR_BUSY,"Phone login is already running.");return -1;}
+    if(fl_phone_profile(c,&profile,error)||fl_account_stage(p,c,&profile,error))return -1;
     int n=snprintf(seed,sizeof(seed),"[%s]\ntype = drive\nscope = drive.readonly\nclient_id = %s\nclient_secret = %s\nroot_folder_id = %s\nconfig_is_local = true\nconfig_auth_no_browser = true\nauth_url = https://accounts.google.com/o/oauth2/v2/auth?prompt=consent\n",
                    c->remote,p->profile.client_id,p->profile.client_secret,p->profile.root_id);
     if(n<0||n>=(int)sizeof(seed)||fl_write_atomic(p->staged.credential_path,seed,(size_t)n,error))goto fail;
@@ -163,14 +173,16 @@ static int verify_start(FlPhone *p,FlError *error){
     const char *args[]={p->config.rclone_path,"cat",remote,"--config",path,"--retries","1","--low-level-retries","1","--contimeout","8s","--timeout","20s","--log-level","ERROR",NULL};
     return fl_process_start(&p->worker,args,8192,error);
 }
-static int install_phone(FlPhone *p,FlError *error){
+int fl_account_commit(FlPhone *p,const char *token_url,FlError *error){
     char *new_credentials=NULL;char settings[512];bool created_settings=false;
     if(fl_credentials_check(&p->staged,error))return -1;
     cJSON *token=phone_token(p);char *json=token?cJSON_PrintUnformatted(token):NULL;cJSON_Delete(token);
     if(!json){fl_error(error,FL_ERR_IO,"Cannot prepare the new account.");return -1;}
-    new_credentials=malloc(strlen(json)+2048);
+    if(token_url&&(strncmp(token_url,"https://",8)||strlen(token_url)>400||strpbrk(token_url,"\r\n\"\\ "))){free(json);fl_error(error,FL_ERR_CONFIG,"Unsafe authorization service address.");return -1;}
+    new_credentials=malloc(strlen(json)+2560);
     if(!new_credentials){free(json);fl_error(error,FL_ERR_LIMIT,"Not enough memory to save account.");return -1;}
     sprintf(new_credentials,"[%s]\ntype = drive\nscope = drive.readonly\nclient_id = %s\nclient_secret = %s\nroot_folder_id = %s\ntoken = %s\n",p->config.remote,p->profile.client_id,p->profile.client_secret,p->profile.root_id,json);
+    if(token_url){strcat(new_credentials,"token_url = ");strcat(new_credentials,token_url);strcat(new_credentials,"\n");}
     memset(json,0,strlen(json));free(json);
     if(!unchanged(p->config.credential_path,p->old_credentials,p->had_credentials)||!unchanged(p->config.settings_path,p->old_settings,p->had_settings)){
         free(new_credentials);fl_error(error,FL_ERR_BUSY,"Account settings changed during login. Existing files were kept; retry.");return -1;
@@ -216,6 +228,6 @@ int fl_phone_poll(FlPhone *p,FlError *error){
     cJSON *j=cJSON_Parse(p->worker.out);cJSON *type=cJSON_GetObjectItemCaseSensitive(j,"mimeType");cJSON *id=cJSON_GetObjectItemCaseSensitive(j,"id");
     bool valid=cJSON_IsObject(j)&&cJSON_IsString(type)&&!strcmp(type->valuestring,"application/vnd.google-apps.folder")&&cJSON_IsString(id)&&!strcmp(id->valuestring,p->profile.root_id);cJSON_Delete(j);
     if(!valid)return finish_phone(p,FL_ERR_FOLDER,"The selected Google account cannot verify the shared library folder. Existing account was kept.",error);
-    if(install_phone(p,&e))return finish_phone(p,e.code,e.message,error);
+    if(fl_account_commit(p,NULL,&e))return finish_phone(p,e.code,e.message,error);
     return finish_phone(p,FL_OK,"Connected. Close the phone tunnel. Turn SSH off if used only for setup.",error);
 }

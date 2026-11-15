@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "service_url": "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev",
+  "client_id": "YOUR-WEB-CLIENT.apps.googleusercontent.com",
+  "root_folder_id": "YOUR_SHARED_FOLDER_ID"
+}

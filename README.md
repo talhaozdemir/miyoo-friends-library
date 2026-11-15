@@ -1,28 +1,27 @@
 # Miyoo Friends Library
 
-0.2.0: Bilgisayardan kurulum ve otomatik OAuth yenilemesi korunur. İsteğe bağlı
-**SELECT → Connect with phone** ile ilk Google bağlantısı veya yeniden giriş
-kart çıkarılmadan yapılabilir. **Phone setup guide** cihaz içinde sekiz sayfa
-çevrimdışı açıklama ve telefon rehberi QR'si sunar.
+0.3.0: İsteğe bağlı **SELECT → Account → Connect with phone** artık HTTPS QR
+ile Safari/Chrome girişini destekler. Telefona ek uygulama veya SSH gerekmez.
+QR'daki altı haneli kodu karşılaştır, Google'da davetli hesabınla salt okunur
+erişimi onayla, sonra Miyoo'da **A: Save connection** ile kaydet. İlk Google
+kurulumu ve yeniden bağlantı aynı akışı kullanır. Uygulama içindeki dört sayfalık
+**Phone setup guide** çevrimdışı okunabilir. [Telefon rehberi](docs/HTTPS_SETUP.html).
 
-Telefon ve Miyoo aynı güvenilir Wi-Fi'da olmalı; telefonda SSH **local port
-forwarding** uygulaması gerekir. QR tek başına tünel kurmaz. Hazır arkadaş
-ZIP'inde ilk telefon girişi için ortak public Desktop uygulama/klasör tanımı
-`App/FriendsLibrary/config/phone-setup.json` içine eklenir; kullanıcı tokenı
-bulunmaz. Genel kaynak/OnionOS paketinde bu özel dağıtım tanımı bulunmaz;
-mevcut bilgisayar bağlantısının public client bilgileri yeniden kullanılabilir.
+HTTPS yöntemi için pakette dağıtıcı tarafından yapılandırılmış
+`config/https-setup.json` ve çalışan Cloudflare Worker gerekir. Genel kaynak ve
+OnionOS paketinde gerçek servis/hesap profili yoktur. HTTPS servisinin Google Web
+istemci kurulumu tamamlanmadan giriş hazır sayılmaz. [Servis kurulumu](auth-service/README.md).
+Servis yalnız giriş/yenilemede Google tokenlarını işler; ROM'lar doğrudan
+Google'dan iner. Kısa süreli eşleştirme verisi şifrelenir, kalıcı sunucu kaydı
+yalnız token özeti/grant durumudur. Cihaz kendi tokenını SD'de saklar; Web istemci
+sırrı cihazda veya dağıtım paketinde bulunmaz.
 
-İlk dosya kopyalamasından sonra telefonla Google yetkilendirmesi bilgisayar
-istemez. Uygulama SSH servisini açmaz veya ayarlarını değiştirmez. Yeni hesap
-ayrı çalışma dizininde yetkilendirilir, Google Files.get ile salt okunur klasör
-erişimi doğrulanır, sonra atomik kaydedilir. İptal ve hata önceki hesabı korur.
-[Ayrıntılı telefon rehberi](docs/PHONE_SETUP.html).
-
-Bu özellik mock/loopback OAuth ve QR ekranı testlerinden geçti; Android/iOS +
-OnionOS üzerinde gerçek uçtan uca doğrulama henüz yapılmadı. Pinned rclone
-1.76.0 Drive yetkilendirmesi kendi OAuth state kontrolünü kullanır; Drive
-backend'inde PKCE etkin değildir. Dinleyici loopback'te tutulur ve yalnız SSH
-tüneli üzerinden kullanılır; bir LAN HTTP giriş servisi açılmaz.
+Bilgisayardan doğrudan Google/rclone kurulumu ve otomatik yenilemesi korunur.
+Eski tünel yöntemi **Advanced SSH login / guide** altında kalır. HTTPS bağlantısı
+servisin erişilebilirliğine bağlıdır; servis için Workers/D1 Free kotaları
+kullanılır, ücretli yükseltme yapılmaz. İptal/hata eski hesabı korur; yalnız
+başarıyla kaydedilen yeni giriş hesabı değiştirir. Fiziksel iPhone/Android +
+Miyoo üzerinde bu yeni akışın kabul testi henüz yapılmadı.
 
 OnionOS 4.3 stable kullanan **Miyoo Mini Plus** için özel Google Drive
 kütüphanesi gezgini. Arkadaş → konsol → oyun seçerek dosyayı doğru `Roms/`
@@ -68,9 +67,11 @@ Genel paket ve kendi OAuth istemcisini kullanmak isteyenler için:
 4. Kartı güvenle çıkarıp Miyoo'ya takın. Wi-Fi ve cihaz saati doğru olsun.
 5. **Apps → Friends Library** açın. İlk kullanımda liste ağdan yüklenir.
 
-Firmware flashlama, Python, SDL2, telefon, harici sunucu veya sürekli arka plan
-servisi gerekmez. SDL 1.2 Onion runtime'dan, rclone ve CA dosyası uygulama
-paketinden kullanılır. SSH normal kullanım gereksinimi değildir.
+Firmware flashlama, Python, SDL2 veya sürekli arka plan servisi gerekmez.
+Bilgisayar yöntemi normal kullanımda harici giriş servisi istemez; HTTPS telefon
+yönteminin otomatik yenilemesi yapılandırılmış Worker'a bağlıdır. SDL 1.2 ve
+curl Onion runtime'dan, rclone ve CA dosyası uygulama paketinden kullanılır.
+SSH normal kullanım gereksinimi değildir.
 
 ## Kütüphane ve yapılandırma
 

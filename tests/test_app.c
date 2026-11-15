@@ -79,16 +79,16 @@ int main(int argc,char **argv) {
     handle_key(&a,FL_KEY_OPEN); CHECK(a.error.code==FL_ERR_UNSUPPORTED); dismiss(&a); CHECK(a.level==1);
     handle_key(&a,FL_KEY_BACK); CHECK(a.level==0);
     handle_key(&a,FL_KEY_DISCONNECT); CHECK(a.screen==SCREEN_ACCOUNT);
-    handle_key(&a,FL_KEY_OPEN);CHECK(a.screen==SCREEN_PHONE_READY);
-    handle_key(&a,FL_KEY_REFRESH);CHECK(a.screen==SCREEN_PHONE_GUIDE);
-    for(unsigned i=0;i<10;i++)handle_key(&a,FL_KEY_RIGHT);CHECK(a.guide_page==7);
-    handle_key(&a,FL_KEY_BACK);CHECK(a.screen==SCREEN_PHONE_READY);
+    handle_key(&a,FL_KEY_OPEN);CHECK(a.screen==SCREEN_HTTPS_READY);
+    handle_key(&a,FL_KEY_REFRESH);CHECK(a.screen==SCREEN_HTTPS_GUIDE);
+    for(unsigned i=0;i<10;i++)handle_key(&a,FL_KEY_RIGHT);CHECK(a.guide_page==3);
+    handle_key(&a,FL_KEY_BACK);CHECK(a.screen==SCREEN_HTTPS_READY);
     handle_key(&a,FL_KEY_BACK);CHECK(a.screen==SCREEN_ACCOUNT);
-    for(unsigned i=0;i<3;i++)handle_key(&a,FL_KEY_DOWN);
+    for(unsigned i=0;i<5;i++)handle_key(&a,FL_KEY_DOWN);
     handle_key(&a,FL_KEY_OPEN);CHECK(a.screen==SCREEN_DISCONNECT);
     handle_key(&a,FL_KEY_BACK);CHECK(a.screen==SCREEN_ACCOUNT);
     handle_key(&a,FL_KEY_BACK); CHECK(a.screen==SCREEN_LIST); CHECK(!a.disconnected);
-    handle_key(&a,FL_KEY_DISCONNECT);for(unsigned i=0;i<3;i++)handle_key(&a,FL_KEY_DOWN);handle_key(&a,FL_KEY_OPEN);handle_key(&a,FL_KEY_OPEN);
+    handle_key(&a,FL_KEY_DISCONNECT);for(unsigned i=0;i<5;i++)handle_key(&a,FL_KEY_DOWN);handle_key(&a,FL_KEY_OPEN);handle_key(&a,FL_KEY_OPEN);
     CHECK(a.screen==SCREEN_MESSAGE && a.error.code==FL_OK); CHECK(!a.disconnected); dismiss(&a);
     /* Simulated stale cache is visible after a failed refresh, with offline status. */
     a.backend.initialized=true; a.backend.done=true; a.backend.cache_fallback=true;
@@ -112,8 +112,14 @@ int main(int argc,char **argv) {
     for(unsigned i=0;i<3;++i)frame_free(&a.frames[i]);
     /* Render every offline guide page, account menu and initial setup. */
     CHECK(setenv("SDL_VIDEODRIVER","dummy",1)==0);a.ui=fl_ui_open(&error);CHECK(a.ui!=NULL);a.level=0;
-    const Screen screens[]={SCREEN_ACCOUNT,SCREEN_PHONE_READY,SCREEN_SETUP,SCREEN_COMPUTER};
-    for(unsigned i=0;i<4;i++){a.screen=screens[i];draw(&a);CHECK(!a.quit);}
+    const Screen screens[]={SCREEN_ACCOUNT,SCREEN_PHONE_READY,SCREEN_SETUP,SCREEN_COMPUTER,SCREEN_HTTPS_READY,SCREEN_HTTPS};
+    for(unsigned i=0;i<6;i++){a.screen=screens[i];draw(&a);CHECK(!a.quit);}
+    a.screen=SCREEN_HTTPS_GUIDE;
+    for(unsigned page=0;page<4;page++){
+        a.guide_page=page;draw(&a);CHECK(!a.quit);char shot[128];snprintf(shot,sizeof(shot),"build/ui-https-guide-%u.bmp",page+1);CHECK(!fl_ui_screenshot(a.ui,shot,&error));
+        if(page<3)for(unsigned line=0;line<8;line++)CHECK(strlen(https_guide[page][line])<=49);
+    }
+    strcpy(a.qr_url,"https://test.workers.dev/pair/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");CHECK(!fl_phone_qr(a.qr_url,a.phone_qr));strcpy(a.https.code,"123456");a.https.ready=true;a.screen=SCREEN_HTTPS;draw(&a);CHECK(!fl_ui_screenshot(a.ui,"build/ui-https-qr.bmp",&error));a.qr_url[0]=0;
     a.screen=SCREEN_PHONE_GUIDE;snprintf(a.device_ip,sizeof(a.device_ip),"192.168.1.42");
     for(unsigned page=0;page<8;page++){
         a.guide_page=page;draw(&a);CHECK(!a.quit);char shot[128];snprintf(shot,sizeof(shot),"build/ui-phone-guide-%u.bmp",page+1);CHECK(fl_ui_screenshot(a.ui,shot,&error)==0);

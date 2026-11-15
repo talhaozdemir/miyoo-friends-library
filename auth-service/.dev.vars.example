@@ -1,0 +1,3 @@
+# Local tests only. Put production values in Wrangler secrets, never this file.
+GOOGLE_CLIENT_SECRET="test-only-client-secret"
+SESSION_KEY="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

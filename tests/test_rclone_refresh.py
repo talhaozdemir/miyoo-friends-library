@@ -5,6 +5,7 @@ answers requests. Tests verify refresh permission survives expiry, persistence,
 process restart and fatal OAuth rejection; no browser is launched.
 """
 import argparse
+import base64
 import configparser
 import hashlib
 import http.server
@@ -33,6 +34,11 @@ class Mock(http.server.BaseHTTPRequestHandler):
         data = urllib.parse.parse_qs(self.rfile.read(int(self.headers["Content-Length"])).decode())
         assert data.get("grant_type") == ["refresh_token"]
         assert data.get("refresh_token") == ["mock-refresh-testonly"]
+        # rclone may probe HTTP Basic before credentials in the form body.
+        auth = self.headers.get("Authorization", "")
+        client = (base64.b64decode(auth[6:]).decode().split(":")[0]
+                  if auth.startswith("Basic ") else data.get("client_id", [""])[0])
+        assert client == "mock.apps.googleusercontent.com"
         self.server.refreshes += 1
         body = ({"access_token": "mock-renewed-access", "token_type": "Bearer", "expires_in": 3600}
                 if self.server.mode == "ok" else {"error": self.server.mode})
@@ -53,6 +59,7 @@ def read_token(path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--rclone", type=Path, default=ROOT / "downloads/rclone-v1.76.0-windows-amd64/rclone.exe")
+    parser.add_argument("--empty-client-secret", action="store_true", help="HTTPS broker device configuration")
     args = parser.parse_args()
     binary = args.rclone.resolve()
     if binary.suffix == ".exe":
@@ -73,8 +80,9 @@ def main():
             def expired():
                 token = {"access_token": "mock-expired-access", "refresh_token": "mock-refresh-testonly",
                          "token_type": "Bearer", "expiry": "1970-01-01T00:00:01Z"}
+                secret = "" if args.empty_client_secret else "mock-public-client-secret"
                 path.write_text("[friends]\ntype=drive\nscope=drive.readonly\nclient_id=mock.apps.googleusercontent.com\n"
-                                "client_secret=mock-public-client-secret\nroot_folder_id=mock_root\n"
+                                f"client_secret={secret}\nroot_folder_id=mock_root\n"
                                 f"token_url={address}/token\ntoken={json.dumps(token)}\n", encoding="utf-8")
 
             def invoke():

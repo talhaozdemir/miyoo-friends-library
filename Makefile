@@ -38,7 +38,10 @@ build/test-favorites: $(CORE) src/main.c src/ui_sdl.c tests/test_favorites.c $(w
 build/test-phone: $(CORE) tests/test_phone.c $(wildcard include/*.h) Makefile | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) $(CORE) tests/test_phone.c -o $@ $(LDFLAGS) -lpthread -lm
 
-test: build/test-core build/test-backend build/test-ui build/test-download build/test-app build/test-favorites build/test-phone
+build/test-https: $(CORE) tests/test_https.c $(wildcard include/*.h) Makefile | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) $(CORE) tests/test_https.c -o $@ $(LDFLAGS) -lpthread -lm
+
+test: build/test-core build/test-backend build/test-ui build/test-download build/test-app build/test-favorites build/test-phone build/test-https
 	./build/test-core
 	./build/test-backend "$(CURDIR)"
 	SDL_VIDEODRIVER=dummy ./build/test-ui
@@ -46,6 +49,7 @@ test: build/test-core build/test-backend build/test-ui build/test-download build
 	./build/test-app "$(CURDIR)"
 	./build/test-favorites
 	./build/test-phone "$(CURDIR)"
+	./build/test-https "$(CURDIR)"
 
 clean:
 	rm -f build/friends-library build/friends-library-arm build/test-core build/test-backend build/test-ui build/test-download build/test-app build/test-favorites

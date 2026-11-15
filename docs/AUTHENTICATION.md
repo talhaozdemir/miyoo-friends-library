@@ -1,15 +1,22 @@
 # İlk Google yetkilendirmesi
 
-0.2.0 ile bilgisayara alternatif olarak telefondan ilk giriş ve yeniden bağlantı
-vardır: **Setup options / SELECT → Connect with phone**. Önce **Phone setup
-guide** okunur. Aynı güvenilir Wi-Fi, telefonda SSH local forwarding uygulaması
-ve Miyoo'da açık/authenticated SSH gerekir. [Telefon rehberi](PHONE_SETUP.html).
-QR yalnız başlangıç bağlantısını taşır; tünel uygulamasını otomatik kurmaz.
-Hazır arkadaş paketindeki public Desktop profilinde hesap tokenı bulunmaz.
-Bilgisayardan aşağıdaki kurulum yöntemi aynen kullanılabilir.
+0.3.0'da **Setup options / SELECT → Account → Connect with phone** HTTPS QR ile
+Safari/Chrome'dan ilk giriş ve yeniden bağlantı sunar. Ek telefon uygulaması
+gerekmez. Kod karşılaştırma ve Miyoo'da A onayı gerekir. [Telefon rehberi](HTTPS_SETUP.html).
+Dağıtıcının ayrı Google **Web** OAuth istemcisi ve çalışan ücretsiz Worker'ı
+kurmuş olması gerekir; [servis kurulumu](../auth-service/README.md). Yalnız public
+client ID, servis origin ve root ID `config/https-setup.json` içinde dağıtılır.
+Web client secret yalnız Worker secrets'tadır. Kalıcı Google refresh tokenı SD'de
+tutulur; yenileme HTTPS servisi üzerinden yapılır. Bu servisin erişilebilirliği
+gereklidir; kısa süreli şifreli token oturumu ve kalıcı hash/grant kaydı sunucudadır.
+Drive listeleme/ROM transferi cihazdan doğrudan Google'a gider.
 
-Bu işlem bilgisayarda veya yukarıdaki telefon yöntemiyle yapılır. Normal kullanımda bilgisayar, telefon veya
-sunucu gerekmez. Her arkadaş kendi Google hesabını yetkilendirir. Tokenları
+Bilgisayardan aşağıdaki doğrudan Google kurulumu aynen kullanılabilir. Eski telefon
+tüneli **Advanced SSH login** altında korunur: [ileri SSH rehberi](PHONE_SETUP.html).
+
+Bu işlem bilgisayarda veya telefon yöntemiyle yapılır. Normal kullanımda bilgisayar
+ve telefon gerekmez; HTTPS yönteminde token yenileme servisi çalışmalıdır.
+Her arkadaş kendi Google hesabını yetkilendirir. Tokenları
 sohbete, issue'ya, e-postaya veya Git'e göndermeyin.
 
 ## Hazır arkadaş paketi

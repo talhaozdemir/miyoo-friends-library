@@ -1,5 +1,17 @@
 # Bilinen sınırlar — V1
 
+- 0.3.0 HTTPS giriş kaynak/host testleri vardır; gerçek Web OAuth kurulumu,
+  iPhone Safari ve Miyoo uçtan uca kabulü ayrıca gerekir. Genel pakette servis
+  profili yoktur. Dağıtıcının Google Web client/Worker secrets ayarları ve hazır
+  `https-setup.json` olmadan bu seçenek açıklayıcı hata verir.
+- HTTPS ile bağlanan hesapların otomatik yenilemesi ücretsiz servisin açık
+  kalmasına bağlıdır. Worker/D1 Free kota veya servis kesintileri erişimi
+  durdurabilir; ücretli yükseltme yapılmaz. Bilgisayar kurulumu direct Google'dır.
+- Servis auth/refresh sırasında Google tokenlarını işler. Bekleyen tokenlar
+  AES-GCM şifrelidir; claim beş dakikada kapanır, ACK/cancel siler, saatlik cron
+  temizler. Veritabanı yedekleri daha uzun saklanabilir. Yönetici/key ele geçirilirse
+  şifreleme koruması yeterli olmaz. Kalıcı grant kayıtları token özeti içerir.
+
 - **Cihaz kabulü açık:** ARM binary derlenmiştir; Miyoo Mini Plus fiziksel
   cihazında açılış, Wi-Fi, kaynak kullanımı, batarya ve gerçek Google OAuth
   bağlantısı denenmemiştir. Host SDL dummy driver sonucu cihaz testi değildir.

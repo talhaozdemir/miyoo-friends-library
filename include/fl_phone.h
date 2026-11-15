@@ -20,6 +20,9 @@ typedef struct {
 int fl_phone_profile(const FlConfig *config,FlPhoneProfile *profile,FlError *error);
 int fl_phone_url(const char *output,char url[192]);
 int fl_phone_start(FlPhone *phone,const FlConfig *config,FlError *error);
+/* Shared account transaction used by HTTPS pairing too. No network listener. */
+int fl_account_stage(FlPhone *account,const FlConfig *config,const FlPhoneProfile *profile,FlError *error);
+int fl_account_commit(FlPhone *account,const char *token_url,FlError *error);
 /* 0 pending; 1 installed; -1 failure. Only sanitized error messages leave worker. */
 int fl_phone_poll(FlPhone *phone,FlError *error);
 void fl_phone_cancel(FlPhone *phone);

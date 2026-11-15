@@ -1,5 +1,13 @@
 # Teknik karar kaydı — 2026-11-14
 
+2026-11-15 / 0.3.0 ek kararı: kullanıcı kartı çıkarmadan, ek telefon uygulaması
+olmadan Safari/QR ile giriş istedi. Bu seçenek için ayrı Web OAuth istemcisi ve
+Workers Free + D1 Free üzerinde küçük auth/refresh servisi eklendi. Başlangıçtaki
+Desktop/direct Google mimarisi korunur. ROM transferi ve browse her iki yöntemde
+direct Google/rclone'dır; yeni sunucu sadece isteğe bağlı HTTPS hesabının giriş
+ve yenilemesini işler. Cihaz TLS doğrulamalı Onion curl'ü async alt süreç olarak
+kullanır. [Protokol, dağıtım ve güvenlik](../auth-service/README.md).
+
 Hedef OnionOS **v4.3.0 / Miyoo Mini Plus**; ARMv7 Cortex-A7 hard-float.
 Native uygulama C + SDL 1.2 seçildi. Python, SDL2, ncurses, dialog, jq veya
 desktop Linux paketi var sayılmıyor. Font uygulama içinde özgün bitmap

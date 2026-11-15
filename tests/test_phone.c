@@ -75,6 +75,10 @@ int main(int argc,char **argv){
     path_test(dir,c.data_dir,".phone-auth-Ab1234");CHECK(mkdir(dir,0700)==0);path_test(child,dir,"rclone.conf");write_test(child,"TEST_ONLY");
     fl_phone_recover(&c);CHECK(lstat(dir,&st)<0&&errno==ENOENT);CHECK(same_file(c.credential_path,old_credentials));
     CHECK(mkdir(dir,0700)==0);path_test(child,dir,"user-data.txt");write_test(child,"KEEP");fl_phone_recover(&c);CHECK(same_file(child,"KEEP"));
+    /* A broker account can return to the bundled Desktop/advanced SSH flow. */
+    write_test(profile_path,profile);
+    write_test(c.credential_path,"[friends]\ntype=drive\nclient_id=web.apps.googleusercontent.com\nclient_secret=\ntoken_url=https://test.workers.dev/v1/token\n");
+    CHECK(fl_phone_profile(&c,&pub,&e)==0);CHECK(!strcmp(pub.client_secret,"MOCK_PUBLIC_SECRET"));CHECK(!strcmp(pub.client_id,"mock.apps.googleusercontent.com"));
     CHECK(unlink(c.credential_path)==0);CHECK(symlink(child,c.credential_path)==0);CHECK(fl_phone_start(&p,&c,&e)<0&&e.code==FL_ERR_PATH);CHECK(same_file(child,"KEEP"));CHECK(unlink(c.credential_path)==0);
     unsetenv("FL_PHONE_TEST_MODE");
     printf("phone: %u checks passed (first setup/reconnect, scoped profile, QR, mock OAuth, cancellation/timeout, account preservation, permissions/offline and interrupted cleanup)\n",checks);return 0;
